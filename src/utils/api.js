@@ -18,7 +18,11 @@ export const registerUser = (userData) => api.post("/auth/register", userData)
 export const loginUser = (credentials) => api.post("/auth/login", credentials)
 export const getUserProfile = () => api.get("/auth/profile")
 export const getUser = (id) => api.get(`/users/${id}`)
-export const getUserHistory = (id) => api.get(`/users/${id}/history`)
+export const getUserHistory = (token) => api.get(`/users/history`, {}, {
+  headers: {
+    Authorization: `Bearer ${token}`
+  }
+})
 export const getUserPoints = (id, token) => api.get(`/users/${id}/points`, {}, {
   headers: {
     Authorization: `Bearer ${token}`
