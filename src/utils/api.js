@@ -42,7 +42,7 @@ export const getFolder = (id) => api.get(`/folders/${id}`)
 export const updateFolder = (id, folderData) => api.patch(`/folders/${id}`, folderData)
 export const deleteFolder = (id) => api.delete(`/folders/${id}`)
 export const createTask = async (taskData, token) => {
-  return fetch("http://localhost:3000/tasks", {
+  return fetch("https://api-familia-tareas-node.onrender.com", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -53,7 +53,7 @@ export const createTask = async (taskData, token) => {
 };
 export const getFolderTasks = (folderId) => api.get(`/folders/${folderId}/tasks`)
 export const updateTask = (id, taskData, token) => {
-  return fetch(`http://localhost:3000/tasks/${id}`, {
+  return fetch(`https://api-familia-tareas-node.onrender.com/tasks/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -64,7 +64,7 @@ export const updateTask = (id, taskData, token) => {
 }
 
 export const deleteTask = (id, token) => {
-  return fetch(`http://localhost:3000/tasks/${id}`, {
+  return fetch(`https://api-familia-tareas-node.onrender.com/tasks/${id}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
