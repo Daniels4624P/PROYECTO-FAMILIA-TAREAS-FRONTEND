@@ -39,6 +39,12 @@ function Sidebar() {
             >
               Tasks
             </Link>
+            <Link
+              to="/users/points"
+              className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+            >
+              User Points
+            </Link>
             {user.isAdmin && (
               <Link
                 to="/users"

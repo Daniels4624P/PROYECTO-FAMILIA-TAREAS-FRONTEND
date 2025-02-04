@@ -10,6 +10,7 @@ import Projects from "./pages/Projects"
 import Folders from "./pages/Folders"
 import Tasks from "./pages/Tasks"
 import Home from "./pages/Home"
+import UsersPoints from "./pages/UsersPoints";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/folders" element={<Folders />} />
                 <Route path="/tasks" element={<Tasks />} />
+                <Route path="/users/points" element={<UsersPoints />} />
               </Routes>
             </div>
           </main>

@@ -27,6 +27,7 @@ export const getUserPoints = (id, token) => api.get(`/users/${id}/points`, {}, {
   headers: {
     Authorization: `Bearer ${token}`
   }})
+export const getUsersPoints = () => api.get("/users/points");
 export const createProject = (projectData) => api.post("/projects", projectData)
 export const getPublicProjects = () => api.get("/projects/public")
 export const getPrivateProjects = () => api.get("/projects/private")
