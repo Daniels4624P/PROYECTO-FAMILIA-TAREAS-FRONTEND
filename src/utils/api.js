@@ -47,8 +47,25 @@ export const createTask = async (taskData, token) => {
   }).then((res) => res.json());
 };
 export const getFolderTasks = (folderId) => api.get(`/folders/${folderId}/tasks`)
-export const updateTask = (id, taskData) => api.patch(`/tasks/${id}`, taskData)
-export const deleteTask = (id) => api.delete(`/tasks/${id}`)
+export const updateTask = (id, taskData, token) => {
+  return fetch(`http://localhost:3000/tasks/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(taskData),
+  }).then((res) => res.json())
+}
+
+export const deleteTask = (id, token) => {
+  return fetch(`http://localhost:3000/tasks/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((res) => res.json())
+}
 export const completeTask = (id, token) => 
   api.patch(`/tasks/${id}/complete`, {}, {
     headers: {

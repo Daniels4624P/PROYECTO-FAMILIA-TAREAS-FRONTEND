@@ -9,7 +9,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 function Folders() {
   const [folders, setFolders] = useState([]);
   const [newFolderName, setNewFolderName] = useState("");
-  const [isPublic, setIsPublic] = useState(true); // Controla la visibilidad
+  const [isPublic, setIsPublic] = useState(true);
 
   useEffect(() => {
     fetchFolders();
@@ -28,7 +28,6 @@ function Folders() {
   const handleCreateFolder = async (e) => {
     e.preventDefault();
     try {
-      // Enviamos 'public' en el JSON, no 'isPublic'
       await createFolder({ name: newFolderName, public: isPublic });
       setNewFolderName("");
       setIsPublic(true);
@@ -48,15 +47,15 @@ function Folders() {
   };
 
   return (
-    <Card className="w-[400px] mx-auto mt-10">
+    <Card className="w-[400px] mx-auto mt-10 bg-notion-bg dark:bg-notion-dark">
       <CardHeader>
-        <CardTitle>Folders</CardTitle>
-        <CardDescription>Manage your folders</CardDescription>
+        <CardTitle className="text-notion-text dark:text-notion-text-dark">Folders</CardTitle>
+        <CardDescription className="text-notion-text-light dark:text-notion-text-dark">Manage your folders</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleCreateFolder} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="folder-name">Folder Name</Label>
+            <Label htmlFor="folder-name" className="text-notion-text dark:text-notion-text-dark">Folder Name</Label>
             <Input
               id="folder-name"
               type="text"
@@ -64,14 +63,14 @@ function Folders() {
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               required
+              className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
             />
           </div>
 
-          {/* Selector para visibilidad */}
           <div className="space-y-2">
-            <Label htmlFor="visibility">Visibility</Label>
+            <Label htmlFor="visibility" className="text-notion-text dark:text-notion-text-dark">Visibility</Label>
             <Select value={isPublic ? "public" : "private"} onValueChange={(value) => setIsPublic(value === "public")}>
-              <SelectTrigger id="visibility">
+              <SelectTrigger id="visibility" className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark">
                 <SelectValue placeholder="Select visibility" />
               </SelectTrigger>
               <SelectContent>
@@ -82,7 +81,7 @@ function Folders() {
           </div>
 
           <CardFooter>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full bg-notion-orange hover:bg-notion-orange-dark text-white">
               Create Folder
             </Button>
           </CardFooter>
@@ -90,10 +89,10 @@ function Folders() {
 
         <ul className="mt-4 space-y-2">
           {folders.map((folder) => (
-            <li key={folder.id} className="flex justify-between items-center p-2 border rounded-md">
+            <li key={folder.id} className="flex justify-between items-center p-2 border border-notion-gray dark:border-notion-text-dark rounded-md">
               <div>
-                <span className="font-semibold">{folder.name}</span>
-                <span className="ml-2 text-xs text-gray-500">
+                <span className="font-semibold text-notion-text dark:text-notion-text-dark">{folder.name}</span>
+                <span className="ml-2 text-xs text-notion-text-light dark:text-notion-text-dark">
                   ({folder.public ? "Public" : "Private"})
                 </span>
               </div>

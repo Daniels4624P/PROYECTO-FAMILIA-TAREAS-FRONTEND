@@ -24,16 +24,16 @@ function Users() {
   }, [user])
 
   if (!user || !user.isAdmin) {
-    return <div>Access denied. Admin only.</div>
+    return <div className="text-notion-text dark:text-notion-text-dark">Access denied. Admin only.</div>
   }
 
   return (
-    <div>
-      <h2>Users</h2>
-      <ul>
+    <div className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark p-6 rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold mb-4">Users</h2>
+      <ul className="space-y-4">
         {users.map((user) => (
-          <li key={user.id}>
-            <p>Name: {user.name}</p>
+          <li key={user.id} className="bg-notion-gray dark:bg-notion-dark p-4 rounded-md">
+            <p className="font-semibold">Name: {user.name}</p>
             <p>Email: {user.email}</p>
           </li>
         ))}

@@ -22,10 +22,31 @@
 }
 
 body {
-  @apply bg-notion-bg text-notion-text transition-all;
+  @apply bg-white text-black transition-colors duration-200;
 }
 
-.dark {
-  @apply bg-notion-dark text-notion-text-dark;
+.dark body {
+  @apply bg-[#191919] text-white;
+}
+
+/* Estilos adicionales para imitar Notion */
+.dark .notion-style {
+  @apply bg-[#202020] text-[#D3D3D3];
+}
+
+.dark .notion-sidebar {
+  @apply bg-[#202020] border-r border-[#2F3437];
+}
+
+.dark .notion-header {
+  @apply bg-[#202020] border-b border-[#2F3437];
+}
+
+.dark .notion-button {
+  @apply bg-[#37352F] text-[#D3D3D3] hover:bg-[#454158];
+}
+
+.dark .notion-input {
+  @apply bg-[#202020] border-[#37352F] text-[#D3D3D3];
 }
 
