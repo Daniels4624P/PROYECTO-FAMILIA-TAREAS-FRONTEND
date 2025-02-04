@@ -1,7 +1,7 @@
 <svg
-  width="250"
-  height="150"
-  viewBox="0 0 250 150"
+  width="300"
+  height="200"
+  viewBox="0 0 300 200"
   xmlns="http://www.w3.org/2000/svg"
   fill="none"
   stroke="#333"
@@ -10,30 +10,34 @@
   stroke-linejoin="round"
 >
   <!-- Elefante grande 1 -->
-  <circle cx="50" cy="80" r="25" />
-  <circle cx="35" cy="65" r="10" />
-  <path d="M25 80 Q15 85 25 90" />
-  <line x1="30" y1="100" x2="25" y2="120" />
-  <line x1="55" y1="100" x2="60" y2="120" />
+  <ellipse cx="60" cy="100" rx="35" ry="25" />
+  <circle cx="40" cy="80" r="12" />
+  <path d="M25 100 Q15 105 25 110" />
+  <line x1="35" y1="120" x2="30" y2="140" />
+  <line x1="65" y1="120" x2="70" y2="140" />
+  <circle cx="50" cy="95" r="5" fill="#333" />
   
   <!-- Elefante grande 2 -->
-  <circle cx="120" cy="80" r="25" />
-  <circle cx="105" cy="65" r="10" />
-  <path d="M95 80 Q85 85 95 90" />
-  <line x1="100" y1="100" x2="95" y2="120" />
-  <line x1="125" y1="100" x2="130" y2="120" />
+  <ellipse cx="140" cy="100" rx="35" ry="25" />
+  <circle cx="120" cy="80" r="12" />
+  <path d="M105 100 Q95 105 105 110" />
+  <line x1="115" y1="120" x2="110" y2="140" />
+  <line x1="145" y1="120" x2="150" y2="140" />
+  <circle cx="130" cy="95" r="5" fill="#333" />
   
   <!-- Elefante pequeño 1 -->
-  <circle cx="85" cy="105" r="15" />
-  <circle cx="75" cy="95" r="6" />
-  <path d="M70 105 Q65 108 70 110" />
-  <line x1="75" y1="112" x2="72" y2="125" />
-  <line x1="95" y1="112" x2="98" y2="125" />
+  <ellipse cx="100" cy="130" rx="20" ry="15" />
+  <circle cx="90" cy="115" r="7" />
+  <path d="M85 130 Q80 133 85 135" />
+  <line x1="90" y1="140" x2="88" y2="150" />
+  <line x1="110" y1="140" x2="112" y2="150" />
+  <circle cx="95" cy="120" r="3" fill="#333" />
   
   <!-- Elefante pequeño 2 -->
-  <circle cx="170" cy="105" r="15" />
-  <circle cx="160" cy="95" r="6" />
-  <path d="M155 105 Q150 108 155 110" />
-  <line x1="160" y1="112" x2="157" y2="125" />
-  <line x1="180" y1="112" x2="183" y2="125" />
+  <ellipse cx="190" cy="130" rx="20" ry="15" />
+  <circle cx="180" cy="115" r="7" />
+  <path d="M175 130 Q170 133 175 135" />
+  <line x1="180" y1="140" x2="178" y2="150" />
+  <line x1="200" y1="140" x2="202" y2="150" />
+  <circle cx="185" cy="120" r="3" fill="#333" />
 </svg>
