@@ -71,11 +71,33 @@ export const deleteTask = (id, token) => {
     },
   }).then((res) => res.json())
 }
-export const completeTask = (id, token) => 
+/*export const completeTask = (id, token) => 
   api.patch(`/tasks/${id}/complete`, {}, {
     headers: {
       Authorization: `Bearer ${token}`
     }
-  });
+  });*/
+export const completePublicTask = (id, token) =>
+  api.patch(
+    `/tasks/${id}/complete/task/public`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+export const completePrivateTask = (id, token) =>
+  api.patch(
+    `/tasks/${id}/complete/task/private`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
 
 export default api
