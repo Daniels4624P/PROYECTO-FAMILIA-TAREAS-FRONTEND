@@ -9,11 +9,12 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   createTask,
   getFolderTasks,
-  completeTask,
   getPrivateFolders,
   getPublicFolders,
   updateTask,
   deleteTask,
+  completePublicTask,
+  completePrivateTask,
 } from "../utils/api"
 import Loader from "../components/Loader"
 import { Pencil, Trash2 } from "lucide-react"
@@ -102,7 +103,11 @@ function Tasks() {
   const handleCompleteTask = async (id) => {
     try {
       const token = localStorage.getItem("token")
-      await completeTask(id, token)
+      if (isPublic) {
+        await completePublicTask(id, token)
+      } else {
+        await completePrivateTask(id, token)
+      }
       fetchTasks(selectedFolder)
     } catch (error) {
       console.error("Error completing task:", error)
