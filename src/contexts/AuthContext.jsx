@@ -32,6 +32,23 @@ export function AuthProvider({ children }) {
     navigate("/login"); // Redirigir al login después del logout
   };
 
+  const registerAndLogin = async (name, email, password) => {
+    try {
+      const registerResponse = await api.registerUser({ name, email, password })
+      if (registerResponse.data.token) {
+        const loginResponse = await api.loginUser({ email, password })
+        const token = loginResponse.data.token
+        const user = loginResponse.data.user
+        localStorage.setItem("token", token)
+        setUser(user)
+        return user
+      }
+    } catch (error) {
+      console.error("Error in registerAndLogin:", error)
+      throw error
+    }
+  }
+
   return (
     <AuthContext.Provider value={{ user, login: authLogin, register: authRegister, logout: authLogout }}>
       {children}
