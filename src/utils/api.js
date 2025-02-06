@@ -42,7 +42,7 @@ export const getFolder = (id) => api.get(`/folders/${id}`)
 export const updateFolder = (id, folderData) => api.patch(`/folders/${id}`, folderData)
 export const deleteFolder = (id) => api.delete(`/folders/${id}`)
 export const createTask = async (taskData, token) => {
-  return fetch("https://api-familia-tareas-node.onrender.com", {
+  return fetch("https://api-familia-tareas-node.onrender.com/tasks", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
