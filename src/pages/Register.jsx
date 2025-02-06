@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 
 function Register() {
-  const { registerAndLogin } = useAuth()
+  const { register: registerUser } = useAuth()
   const navigate = useNavigate()
   const {
     register,
@@ -17,8 +17,8 @@ function Register() {
 
   const onSubmit = async (data) => {
     try {
-      await registerAndLogin(data.name, data.email, data.password)
-      navigate("/profile")
+      await registerUser(data.name, data.email, data.password)
+      navigate("/login")
     } catch (error) {
       console.error("Registration failed:", error)
     }
