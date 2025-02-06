@@ -6,51 +6,68 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const navigate = useNavigate(); // Hook para redirección
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      // Aquí deberías verificar el token con el backend
+      // Aquí podrías validar el token llamando al backend
       setUser({ token });
     }
   }, []);
 
   const authLogin = async (email, password) => {
-    const userData = await login(email, password);
-    setUser(userData);
+    try {
+      const userData = await login(email, password);
+      localStorage.setItem("token", userData.token);
+      setUser(userData.user);
+      return userData.user;
+    } catch (error) {
+      console.error("Login failed:", error);
+      throw error;
+    }
   };
 
   const authRegister = async (name, email, password) => {
-    const userData = await register(name, email, password);
-    setUser(userData);
+    try {
+      const userData = await register(name, email, password);
+      localStorage.setItem("token", userData.token);
+      setUser(userData.user);
+      return userData.user;
+    } catch (error) {
+      console.error("Registration failed:", error);
+      throw error;
+    }
   };
 
   const authLogout = () => {
     logout();
+    localStorage.removeItem("token");
     setUser(null);
-    navigate("/login"); // Redirigir al login después del logout
+    navigate("/login");
   };
 
   const registerAndLogin = async (name, email, password) => {
     try {
-      const registerResponse = await api.registerUser({ name, email, password })
-      if (registerResponse.data.token) {
-        const loginResponse = await api.loginUser({ email, password })
-        const token = loginResponse.data.token
-        const user = loginResponse.data.user
-        localStorage.setItem("token", token)
-        setUser(user)
-        return user
-      }
+      const registeredUser = await authRegister(name, email, password);
+      await authLogin(email, password);
+      navigate("/profile");
     } catch (error) {
-      console.error("Error in registerAndLogin:", error)
-      throw error
+      console.error("Error in registerAndLogin:", error);
+      throw error;
     }
-  }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login: authLogin, register: authRegister, logout: authLogout, registerAndLogin: registerAndLogin }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login: authLogin,
+        register: authRegister,
+        logout: authLogout,
+        registerAndLogin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
