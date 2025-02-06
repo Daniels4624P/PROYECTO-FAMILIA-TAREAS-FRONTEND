@@ -1,78 +1,59 @@
-import { createContext, useState, useContext, useEffect } from "react";
-import { login, register, logout } from "../utils/auth";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useState, useEffect } from "react"
+import api from "../api"
 
-const AuthContext = createContext();
+const AuthContext = createContext()
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
+export const useAuth = () => {
+  return useContext(AuthContext)
+}
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token")
     if (token) {
-      // Aquí podrías validar el token llamando al backend
-      setUser({ token });
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`
     }
-  }, []);
+  }, [])
 
-  const authLogin = async (email, password) => {
+  const login = async (email, password) => {
     try {
-      const userData = await login(email, password);
-      localStorage.setItem("token", userData.token);
-      setUser(userData.user);
-      return userData.user;
+      const response = await api.loginUser({ email, password })
+      const token = response.data.token
+      const user = response.data.user
+      localStorage.setItem("token", token)
+      setUser(user)
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`
+      return user
     } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+      console.error("Error in login:", error)
+      throw error
     }
-  };
+  }
 
-  const authRegister = async (name, email, password) => {
-    try {
-      const userData = await register(name, email, password);
-      localStorage.setItem("token", userData.token);
-      setUser(userData.user);
-      return userData.user;
-    } catch (error) {
-      console.error("Registration failed:", error);
-      throw error;
-    }
-  };
-
-  const authLogout = () => {
-    logout();
-    localStorage.removeItem("token");
-    setUser(null);
-    navigate("/login");
-  };
+  const logout = () => {
+    localStorage.removeItem("token")
+    setUser(null)
+    api.defaults.headers.common["Authorization"] = undefined
+  }
 
   const registerAndLogin = async (name, email, password) => {
     try {
-      const registeredUser = await authRegister(name, email, password);
-      await authLogin(email, password);
-      navigate("/profile");
+      const registerResponse = await api.registerUser({ name, email, password })
+      if (registerResponse.data.token) {
+        const loginResponse = await api.loginUser({ email, password })
+        const token = loginResponse.data.token
+        const user = loginResponse.data.user
+        localStorage.setItem("token", token)
+        setUser(user)
+        return user
+      }
     } catch (error) {
-      console.error("Error in registerAndLogin:", error);
-      throw error;
+      console.error("Error in registerAndLogin:", error)
+      throw error
     }
-  };
+  }
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login: authLogin,
-        register: authRegister,
-        logout: authLogout,
-        registerAndLogin,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
+  return <AuthContext.Provider value={{ user, login, logout, registerAndLogin }}>{children}</AuthContext.Provider>
 }
