@@ -214,7 +214,11 @@ function Tasks() {
                     tasks.map((task) => (
                       <Card key={task.id} className="bg-notion-bg dark:bg-notion-dark">
                         <CardContent className="pt-6">
-                          <h3 className="text-lg font-semibold text-notion-text dark:text-notion-text-dark">
+                          <h3
+                            className={`text-lg font-semibold ${
+                              task.completed && isPublic ? "line-through text-notion-text-light" : "text-notion-text"
+                            } dark:text-notion-text-dark`}
+                          >
                             {task.task}
                           </h3>
                           {task.description && (
@@ -226,7 +230,7 @@ function Tasks() {
                             Points: {task.points}
                           </p>
                           <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
-                            Status: {task.completed ? "Completed" : "Pending"}
+                            Status: {task.completed ? (isPublic ? "Completed" : "Completed (Private)") : "Pending"}
                           </p>
                           <div className="mt-4 space-x-2">
                             <Button
