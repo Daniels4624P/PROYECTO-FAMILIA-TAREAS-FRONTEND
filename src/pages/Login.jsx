@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
@@ -8,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 
 function Login() {
   const { login } = useAuth()
@@ -40,6 +37,11 @@ function Login() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {loginError && (
+            <div className="text-sm text-red-500">
+              {loginError}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-notion-text dark:text-notion-text-dark">
               Email
@@ -76,11 +78,6 @@ function Login() {
             />
             {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
           </div>
-          {loginError && (
-            <Alert variant="destructive">
-              <AlertDescription>{loginError}</AlertDescription>
-            </Alert>
-          )}
           <Button type="submit" className="w-full bg-notion-orange hover:bg-notion-orange-dark text-white">
             Login
           </Button>
@@ -91,4 +88,3 @@ function Login() {
 }
 
 export default Login
-
