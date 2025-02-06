@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
@@ -14,6 +16,7 @@ import {
   updateTask,
   deleteTask,
   completePublicTask,
+  completePrivateTask,
 } from "../utils/api"
 import Loader from "../components/Loader"
 import { Pencil, Trash2 } from "lucide-react"
@@ -103,18 +106,14 @@ function Tasks() {
     try {
       const token = localStorage.getItem("token")
       const isTaskPublic = publicFolders.includes(folderId)
-      
+
       if (isTaskPublic) {
         await completePublicTask(id, token)
       } else {
-        await updateTask(id, { completed: true }, token)
+        await completePrivateTask(id, token)
       }
-      
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.id === id ? { ...task, completed: true } : task
-        )
-      )
+
+      setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, completed: true } : task)))
     } catch (error) {
       console.error("Error completing task:", error)
     }
@@ -159,6 +158,57 @@ function Tasks() {
 
           {selectedFolder && (
             <>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-notion-text dark:text-notion-text-dark">
+                    Task Name
+                  </Label>
+                  <Input
+                    id="name"
+                    className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                    {...register("task", { required: "Task name is required" })}
+                  />
+                  {errors.task && <p className="text-sm text-red-500">{errors.task.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-notion-text dark:text-notion-text-dark">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                    {...register("description")}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="points" className="text-notion-text dark:text-notion-text-dark">
+                    Points
+                  </Label>
+                  <Input
+                    id="points"
+                    type="number"
+                    className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                    {...register("points", { min: 0 })}
+                    disabled={!isPublic}
+                  />
+                </div>
+
+                <Button type="submit" className="bg-notion-orange hover:bg-notion-orange-dark text-white">
+                  {editingTask ? "Update Task" : "Create Task"}
+                </Button>
+                {editingTask && (
+                  <Button
+                    type="button"
+                    onClick={() => setEditingTask(null)}
+                    className="ml-2 bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </form>
+
               {loadingTasks ? (
                 <div className="mt-6">
                   <Loader size="large" />
@@ -170,13 +220,22 @@ function Tasks() {
                       <Card key={task.id} className="bg-notion-bg dark:bg-notion-dark">
                         <CardContent className="pt-6">
                           <h3
-                            className={`text-lg font-semibold ${task.completed ? "line-through text-notion-text-light" : "text-notion-text"} dark:text-notion-text-dark`}
+                            className={`text-lg font-semibold ${
+                              task.completed ? "line-through text-notion-text-light" : "text-notion-text"
+                            } dark:text-notion-text-dark`}
                           >
                             {task.task}
                           </h3>
-                          <p className="text-sm text-notion-text-light dark:text-notion-text-dark">Points: {task.points}</p>
+                          {task.description && (
+                            <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                              {task.description}
+                            </p>
+                          )}
+                          <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                            Points: {task.points}
+                          </p>
                           <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
-                            Status: {task.completed ? "Completed" : "Pending"}
+                            Status: {task.completed ? (isPublic ? "Completed" : "Completed (Private)") : "Pending"}
                           </p>
                           <div className="mt-4 space-x-2">
                             <Button
@@ -185,6 +244,20 @@ function Tasks() {
                               disabled={task.completed}
                             >
                               {task.completed ? "Task Completed" : "Complete Task"}
+                            </Button>
+                            <Button
+                              onClick={() => handleEditTask(task)}
+                              className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
+                            >
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteTask(task.id)}
+                              className="bg-red-500 hover:bg-red-600 text-white"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
                             </Button>
                           </div>
                         </CardContent>
@@ -204,3 +277,4 @@ function Tasks() {
 }
 
 export default Tasks
+
