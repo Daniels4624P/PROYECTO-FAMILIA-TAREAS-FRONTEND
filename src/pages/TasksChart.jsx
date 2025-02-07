@@ -33,7 +33,7 @@ function TasksChart({ userId }) {
   return (
     <Card className="bg-notion-bg dark:bg-notion-dark">
       <CardHeader>
-        <CardTitle className="text-notion-text dark:text-notion-text-dark">Tasks per Day</CardTitle>
+        <CardTitle className="text-notion-text dark:text-notion-text-dark">Tasks per Month</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex gap-4 mb-4">
@@ -63,7 +63,7 @@ function TasksChart({ userId }) {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={tasksData}>
-              <XAxis dataKey="day" stroke="#8884d8" />
+              <XAxis dataKey="month" stroke="#8884d8" />
               <YAxis allowDecimals={false} />
               <Tooltip />
               <Bar dataKey="taskCount" fill="#ff7043" />
