@@ -39,7 +39,6 @@ const MonthlyTasksChart = () => {
   const fetchData = useCallback(async () => {
     try {
       const token = localStorage.getItem("token")
-      console.log(`Fetching data for year: ${year}, month: ${month}`) // Log para depuración
       const response = await fetchTasksForMonth(token, year, month)
       const taskData = response.data
 
