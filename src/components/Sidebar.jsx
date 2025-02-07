@@ -29,6 +29,7 @@ function Sidebar() {
               <Link to="/folders" onClick={closeSidebar} className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark">Folders</Link>
               <Link to="/tasks" onClick={closeSidebar} className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark">Tasks</Link>
               <Link to="/users/points" onClick={closeSidebar} className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark">User Points</Link>
+              <Link to="/tasks/monthly" onClick={closeSidebar} className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark">Monthly Graphic</Link>
               {user.isAdmin && (
                 <Link to="/users" onClick={closeSidebar} className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark">Users</Link>
               )}
