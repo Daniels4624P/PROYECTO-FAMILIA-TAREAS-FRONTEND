@@ -13,7 +13,7 @@ import {
   Legend,
 } from "chart.js"
 import { fetchTasksForMonth } from "../utils/api"
-import { useTheme } from "../context/ThemeContext"
+import { useTheme } from "../contexts/ThemeContext"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
