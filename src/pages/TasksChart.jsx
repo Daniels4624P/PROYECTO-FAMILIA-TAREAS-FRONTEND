@@ -12,13 +12,10 @@ function TasksChart({ userId }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-  console.log("Fetching tasks for:", selectedYear, selectedMonth);
-  
   const fetchData = async () => {
     setLoading(true);
     try {
       const response = await fetchTasksForMonth(userId, { year: selectedYear, month: selectedMonth });
-      console.log("API Response:", response);
 
       const formattedData = response.data.map((task) => ({
         day: new Date(task.day).getDate(),
