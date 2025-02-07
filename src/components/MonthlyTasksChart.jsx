@@ -38,14 +38,26 @@ const MonthlyTasksChart = () => {
         const token = localStorage.getItem("token")
         const response = await fetchTasksForMonth(token, year, month)
         const taskData = response.data
-        console.log(taskData)
 
-        // Asumiendo que 'week' es una cadena de fecha ISO
-        const labels = taskData.map((item) => {
-          const date = new Date(item.week)
-          return date.toLocaleDateString("es-ES", { month: "short", day: "numeric" })
+        console.log("Task Data:", taskData) // Para depuración
+
+        // Generamos etiquetas para todas las semanas del mes
+        const labels = []
+        const data = new Array(5).fill(0) // Asumimos máximo 5 semanas por mes
+
+        const startDate = new Date(year, month - 1, 1)
+        for (let i = 0; i < 5; i++) {
+          const weekDate = new Date(startDate)
+          weekDate.setDate(startDate.getDate() + i * 7)
+          labels.push(weekDate.toLocaleDateString("es-ES", { month: "short", day: "numeric" }))
+        }
+
+        // Llenamos los datos recibidos
+        taskData.forEach((item) => {
+          const itemDate = new Date(item.week)
+          const weekIndex = Math.floor((itemDate.getDate() - 1) / 7)
+          data[weekIndex] = Number.parseInt(item.taskCount, 10)
         })
-        const data = taskData.map((item) => item.taskCount)
 
         setChartData({
           labels,
