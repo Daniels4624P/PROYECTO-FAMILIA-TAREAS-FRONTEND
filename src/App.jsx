@@ -11,6 +11,7 @@ import Folders from "./pages/Folders"
 import Tasks from "./pages/Tasks"
 import Home from "./pages/Home"
 import UsersPoints from "./pages/UsersPoints";
+import TasksChart from "./pages/TasksChart";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/folders" element={<Folders />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/users/points" element={<UsersPoints />} />
+                <Route path="/tasks/monthly" element={<TasksChart />} />
               </Routes>
             </div>
           </main>
