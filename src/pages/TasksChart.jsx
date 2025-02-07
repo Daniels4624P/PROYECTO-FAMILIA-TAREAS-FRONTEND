@@ -37,7 +37,7 @@ function TasksChart({ userId }) {
       </CardHeader>
       <CardContent>
         <div className="flex gap-4 mb-4">
-          <Select onValueChange={setSelectedYear} value={selectedYear}>
+          <Select onValueChange={(value) => setSelectedYear(Number(value))} value={selectedYear}>
             <SelectTrigger className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark">
               <SelectValue placeholder="Year" />
             </SelectTrigger>
@@ -47,7 +47,7 @@ function TasksChart({ userId }) {
               ))}
             </SelectContent>
           </Select>
-          <Select onValueChange={setSelectedMonth} value={selectedMonth}>
+          <Select onValueChange={(value) => setSelectedMonth(Number(value))} value={selectedMonth}>
             <SelectTrigger className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark">
               <SelectValue placeholder="Month" />
             </SelectTrigger>
