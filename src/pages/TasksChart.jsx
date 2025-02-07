@@ -45,7 +45,7 @@ function TasksChart({ userId }) {
             </SelectTrigger>
             <SelectContent>
               {[2023, 2024, 2025].map((year) => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                <SelectItem key={year} value={year}>{year}</SelectItem>
               ))}
             </SelectContent>
           </Select>
