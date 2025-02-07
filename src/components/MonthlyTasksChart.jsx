@@ -38,6 +38,7 @@ const MonthlyTasksChart = () => {
         const token = localStorage.getItem("token")
         const response = await fetchTasksForMonth(token, year, month)
         const taskData = response.data
+        console.log(taskData)
 
         // Asumiendo que 'week' es una cadena de fecha ISO
         const labels = taskData.map((item) => {
