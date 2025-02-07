@@ -12,23 +12,28 @@ function TasksChart({ userId }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const response = await fetchTasksForMonth(userId, { year: selectedYear, month: selectedMonth });
-        const formattedData = response.data.map((task) => ({
-          day: new Date(task.day).getDate(),
-          taskCount: task.taskCount,
-        }));
-        setTasksData(formattedData);
-      } catch (error) {
-        console.error("Error fetching tasks data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [userId, selectedMonth, selectedYear]);
+  console.log("Fetching tasks for:", selectedYear, selectedMonth);
+  
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetchTasksForMonth(userId, { year: selectedYear, month: selectedMonth });
+      console.log("API Response:", response);
+
+      const formattedData = response.data.map((task) => ({
+        day: new Date(task.day).getDate(),
+        taskCount: task.taskCount,
+      }));
+
+      setTasksData(formattedData);
+    } catch (error) {
+      console.error("Error fetching tasks data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, [userId, selectedMonth, selectedYear]);
 
   return (
     <Card className="bg-notion-bg dark:bg-notion-dark">
