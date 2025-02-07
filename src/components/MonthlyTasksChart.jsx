@@ -39,15 +39,21 @@ const MonthlyTasksChart = () => {
         const response = await fetchTasksForMonth(token, year, month)
         const taskData = response.data
 
-        const labels = taskData.map((item) => new Date(item.week).toLocaleDateString())
+        // Asumiendo que 'week' es una cadena de fecha ISO
+        const labels = taskData.map((item) => {
+          const date = new Date(item.week)
+          return date.toLocaleDateString("es-ES", { month: "short", day: "numeric" })
+        })
         const data = taskData.map((item) => item.taskCount)
 
         setChartData({
           labels,
           datasets: [
             {
-              ...chartData.datasets[0],
+              label: "Tasks Completed",
               data,
+              borderColor: "rgb(75, 192, 192)",
+              tension: 0.1,
             },
           ],
         })
@@ -57,7 +63,7 @@ const MonthlyTasksChart = () => {
     }
 
     fetchData()
-  }, [year, month, chartData.datasets[0]]) // Added chartData.datasets[0] to dependencies
+  }, [year, month])
 
   const handleYearChange = (e) => {
     setYear(Number.parseInt(e.target.value))
@@ -76,6 +82,21 @@ const MonthlyTasksChart = () => {
       title: {
         display: true,
         text: "Monthly Tasks Completed",
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Week",
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Tasks Completed",
+        },
+        beginAtZero: true,
       },
     },
   }
