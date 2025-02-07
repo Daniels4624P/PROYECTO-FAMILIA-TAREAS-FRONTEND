@@ -100,15 +100,12 @@ export const completePrivateTask = (id, token) =>
   )
 
 export const fetchTasksForMonth = (token, year, month) => 
-  api.get(
-    `/tasks/monthly`,
-    {},
-    {
-      params: { year, month },
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+  api.get(`/tasks/monthly`, {
+    params: { year, month },
+    headers: {
+      Authorization: `Bearer ${token}`
     }
-  ) 
+  });
+
 
 export default api
