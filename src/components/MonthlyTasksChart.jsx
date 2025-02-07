@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Line } from "react-chartjs-2"
 import {
   Chart as ChartJS,
@@ -13,7 +13,7 @@ import {
   Legend,
 } from "chart.js"
 import { fetchTasksForMonth } from "../utils/api"
-import { useTheme } from "../contexts/ThemeContext"
+import { useTheme } from "../context/ThemeContext"
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
@@ -36,50 +36,51 @@ const MonthlyTasksChart = () => {
   const [year, setYear] = useState(new Date().getFullYear())
   const [month, setMonth] = useState(new Date().getMonth() + 1)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("token")
-        const response = await fetchTasksForMonth(token, year, month)
-        const taskData = response.data
+  const fetchData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token")
+      console.log(`Fetching data for year: ${year}, month: ${month}`) // Log para depuración
+      const response = await fetchTasksForMonth(token, year, month)
+      const taskData = response.data
 
-        console.log("Task Data:", taskData)
+      console.log("Task Data:", taskData)
 
-        const labels = []
-        const data = new Array(5).fill(0)
+      const labels = []
+      const data = new Array(5).fill(0)
 
-        const startDate = new Date(year, month - 1, 1)
-        for (let i = 0; i < 5; i++) {
-          const weekDate = new Date(startDate)
-          weekDate.setDate(startDate.getDate() + i * 7)
-          labels.push(weekDate.toLocaleDateString("es-ES", { month: "short", day: "numeric" }))
-        }
-
-        taskData.forEach((item) => {
-          const itemDate = new Date(item.week)
-          const weekIndex = Math.floor((itemDate.getDate() - 1) / 7)
-          data[weekIndex] = Number.parseInt(item.taskCount, 10)
-        })
-
-        setChartData({
-          labels,
-          datasets: [
-            {
-              label: "Tasks Completed",
-              data,
-              borderColor: isDarkMode ? "rgb(129, 140, 248)" : "rgb(75, 192, 192)",
-              backgroundColor: isDarkMode ? "rgba(129, 140, 248, 0.5)" : "rgba(75, 192, 192, 0.5)",
-              tension: 0.1,
-            },
-          ],
-        })
-      } catch (error) {
-        console.error("Error fetching task data:", error)
+      const startDate = new Date(year, month - 1, 1)
+      for (let i = 0; i < 5; i++) {
+        const weekDate = new Date(startDate)
+        weekDate.setDate(startDate.getDate() + i * 7)
+        labels.push(weekDate.toLocaleDateString("es-ES", { month: "short", day: "numeric" }))
       }
-    }
 
-    fetchData()
+      taskData.forEach((item) => {
+        const itemDate = new Date(item.week)
+        const weekIndex = Math.floor((itemDate.getDate() - 1) / 7)
+        data[weekIndex] = Number.parseInt(item.taskCount, 10)
+      })
+
+      setChartData({
+        labels,
+        datasets: [
+          {
+            label: "Tasks Completed",
+            data,
+            borderColor: isDarkMode ? "rgb(129, 140, 248)" : "rgb(75, 192, 192)",
+            backgroundColor: isDarkMode ? "rgba(129, 140, 248, 0.5)" : "rgba(75, 192, 192, 0.5)",
+            tension: 0.1,
+          },
+        ],
+      })
+    } catch (error) {
+      console.error("Error fetching task data:", error)
+    }
   }, [year, month, isDarkMode])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleYearChange = (e) => {
     setYear(Number.parseInt(e.target.value))
@@ -94,43 +95,10 @@ const MonthlyTasksChart = () => {
     plugins: {
       legend: {
         position: "top",
-        labels: {
-          color: isDarkMode ? "#E5E7EB" : "#374151",
-        },
       },
       title: {
         display: true,
-        text: "Monthly Tasks Completed",
-        color: isDarkMode ? "#E5E7EB" : "#374151",
-      },
-    },
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: "Week",
-          color: isDarkMode ? "#E5E7EB" : "#374151",
-        },
-        ticks: {
-          color: isDarkMode ? "#E5E7EB" : "#374151",
-        },
-        grid: {
-          color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: "Tasks Completed",
-          color: isDarkMode ? "#E5E7EB" : "#374151",
-        },
-        ticks: {
-          color: isDarkMode ? "#E5E7EB" : "#374151",
-        },
-        grid: {
-          color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
-        },
-        beginAtZero: true,
+        text: "Tasks Completed per Week",
       },
     },
   }
