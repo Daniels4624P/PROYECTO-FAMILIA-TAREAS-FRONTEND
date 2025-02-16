@@ -10,8 +10,10 @@ import Projects from "./pages/Projects"
 import Folders from "./pages/Folders"
 import Tasks from "./pages/Tasks"
 import Home from "./pages/Home"
-import UsersPoints from "./pages/UsersPoints";
-import TasksChart from "./pages/TasksChart";
+import UsersPoints from "./pages/UsersPoints"
+import TasksChart from "./pages/TasksChart"
+import PasswordRecovery from "./pages/PasswordRecovery"
+import ChangePassword from "./pages/ChangePassword"
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/users/points" element={<UsersPoints />} />
                 <Route path="/tasks/monthly" element={<TasksChart />} />
+                <Route path="/password-recovery" element={<PasswordRecovery />} />
+                <Route path="/change-password" element={<ChangePassword />} />
               </Routes>
             </div>
           </main>
