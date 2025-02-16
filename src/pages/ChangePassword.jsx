@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { changePassword } from "../utils/api"
-import { useRouter } from "next/router"
+import { useNavigate, useLocation } from "react-router-dom"
 
 const ChangePassword = () => {
   const {
@@ -14,20 +14,37 @@ const ChangePassword = () => {
   } = useForm()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState("")
-  const router = useRouter()
-  const { token } = router.query
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const [token, setToken] = useState("")
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const tokenFromUrl = searchParams.get("token")
+    if (tokenFromUrl) {
+      setToken(tokenFromUrl)
+    } else {
+      setMessage("Invalid or missing token. Please use the link from your email.")
+    }
+  }, [location])
 
   const onSubmit = async (data) => {
+    if (!token) {
+      setMessage("Invalid or missing token. Please use the link from your email.")
+      return
+    }
+
     setIsSubmitting(true)
     setMessage("")
     try {
-      await changePassword(token, data.newPassword)
-      setMessage("Password changed successfully. You can now log in with your new password.")
+      const response = await changePassword(token, data.newPassword)
+      setMessage(response.message || "Password changed successfully. You can now log in with your new password.")
       setTimeout(() => {
-        router.push("/login")
+        navigate("/login")
       }, 3000)
     } catch (error) {
-      setMessage("Error changing password. Please try again.")
+      setMessage(error.response?.data?.message || "Error changing password. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -39,6 +56,13 @@ const ChangePassword = () => {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-notion-text dark:text-notion-text-dark">
           Change Password
         </h2>
+        {message && (
+          <div
+            className={`mt-4 p-4 rounded-md ${message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
+          >
+            {message}
+          </div>
+        )}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label
@@ -83,20 +107,13 @@ const ChangePassword = () => {
           <div>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-notion-orange hover:bg-notion-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-notion-orange"
+              disabled={isSubmitting || !token}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-notion-orange hover:bg-notion-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-notion-orange disabled:opacity-50"
             >
               {isSubmitting ? "Changing Password..." : "Change Password"}
             </button>
           </div>
         </form>
-        {message && (
-          <div
-            className={`mt-4 p-4 rounded-md ${message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
-          >
-            {message}
-          </div>
-        )}
       </div>
     </div>
   )
