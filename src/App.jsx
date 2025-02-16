@@ -36,7 +36,7 @@ function App() {
                 <Route path="/users/points" element={<UsersPoints />} />
                 <Route path="/tasks/monthly" element={<TasksChart />} />
                 <Route path="/password-recovery" element={<PasswordRecovery />} />
-                <Route path="/change-password" element={<ChangePassword />} />
+                <Route path="/recovery" element={<ChangePassword />} />
               </Routes>
             </div>
           </main>
