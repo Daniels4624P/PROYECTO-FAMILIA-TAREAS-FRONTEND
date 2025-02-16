@@ -39,7 +39,7 @@ const ChangePassword = () => {
     setMessage("")
     try {
       const response = await changePassword(token, data.newPassword)
-      setMessage(response.message || "Password changed successfully. You can now log in with your new password.")
+      setMessage(response.data.message || "Password changed successfully. You can now log in with your new password.")
       setTimeout(() => {
         navigate("/login")
       }, 3000)
@@ -49,6 +49,8 @@ const ChangePassword = () => {
       setIsSubmitting(false)
     }
   }
+
+  console.log("Rendering ChangePassword component. Token:", token) // Debugging log
 
   return (
     <div className="min-h-screen bg-notion-bg dark:bg-notion-dark flex items-center justify-center">
