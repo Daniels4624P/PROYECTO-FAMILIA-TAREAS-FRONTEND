@@ -107,9 +107,9 @@ export const fetchTasksForMonth = (token, year, month) =>
     }
   });
 
-export const sendRecoveryEmail = (email) => api.post("/recovery", { email })
+export const sendRecoveryEmail = (email) => api.post("/auth/recovery", { email })
 
-export const changePassword = (token, newPassword) => api.post("/change-password", { token, newPassword })
+export const changePassword = (token, newPassword) => api.post("/auth/change-password", { token, newPassword })
 
 
 export default api
