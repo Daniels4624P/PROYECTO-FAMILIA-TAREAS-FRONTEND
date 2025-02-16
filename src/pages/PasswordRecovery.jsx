@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { sendRecoveryEmail } from "../utils/api"
+import { useTheme } from "../contexts/ThemeContext"
 
 const PasswordRecovery = () => {
   const {
@@ -12,6 +13,7 @@ const PasswordRecovery = () => {
   } = useForm()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState("")
+  const { theme } = useTheme()
 
   const onSubmit = async (data) => {
     setIsSubmitting(true)
@@ -43,19 +45,19 @@ const PasswordRecovery = () => {
               type="email"
               autoComplete="email"
               required
-              className="mt-1 block w-full px-3 py-2 bg-notion-bg dark:bg-notion-dark border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 bg-notion-bg dark:bg-notion-dark border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-notion-text dark:text-notion-text-dark focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               {...register("email", {
                 required: "Email is required",
                 pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" },
               })}
             />
-            {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
+            {errors.email && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>}
           </div>
           <div>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-notion-orange hover:bg-notion-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-notion-orange disabled:opacity-50"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-notion-orange hover:bg-notion-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-notion-orange disabled:opacity-50 transition-colors duration-200"
             >
               {isSubmitting ? "Sending..." : "Send Recovery Email"}
             </button>
@@ -63,7 +65,7 @@ const PasswordRecovery = () => {
         </form>
         {message && (
           <div
-            className={`mt-4 p-4 rounded-md ${message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
+            className={`mt-4 p-4 rounded-md ${message.includes("Error") ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200" : "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200"} transition-colors duration-200`}
           >
             {message}
           </div>
