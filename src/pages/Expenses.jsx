@@ -224,7 +224,7 @@ const Expenses = () => {
                     <p className="text-sm text-gray-600 dark:text-gray-400">Category: {expense.category?.name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Account: {expense.account?.name}</p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Amount: ${formatNumber(expense.valor.toString())}
+                      Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Date: {new Date(expense.fecha).toLocaleDateString()}
