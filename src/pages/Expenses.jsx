@@ -61,7 +61,7 @@ const Expenses = () => {
     const formattedData = {
       ...data,
       valor: unformatNumber(data.valor),
-      fecha: new Date(data.fecha + "T00:00:00Z").toISOString(),
+      fecha: new Date(data.fecha + "T00:00:00").toISOString(),
     }
 
     try {
