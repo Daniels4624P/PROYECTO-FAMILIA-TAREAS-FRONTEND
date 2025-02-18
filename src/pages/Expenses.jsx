@@ -5,7 +5,6 @@ import { useForm, Controller } from "react-hook-form"
 import { getExpenses, createExpense, updateExpense, deleteExpense, getCategories, getAccounts } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
 import { formatNumber, unformatNumber } from "../utils/numberFormat"
-import { parseISO, format } from "date-fns"
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([])
@@ -83,7 +82,7 @@ const Expenses = () => {
     setValue("valor", expense.valor.toString())
     setValue("categoriaId", expense.categoriaId)
     setValue("cuentaId", expense.cuentaId)
-    setValue("fecha", format(parseISO(expense.fecha), "yyyy-MM-dd"))
+    setValue("fecha", expense.fecha.split("T")[0])
   }
 
   const handleDelete = async (id) => {
@@ -179,10 +178,7 @@ const Expenses = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Date</label>
             <input
               type="date"
-              {...register("fecha", {
-                required: "Date is required",
-                setValueAs: (value) => format(parseISO(value), "yyyy-MM-dd"),
-              })}
+              {...register("fecha", { required: "Date is required" })}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             />
             {errors.fecha && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.fecha.message}</p>}
@@ -233,7 +229,7 @@ const Expenses = () => {
                       Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {format(parseISO(expense.fecha), "dd/MM/yyyy")}
+                      Date: {new Date(expense.fecha).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex space-x-2">
