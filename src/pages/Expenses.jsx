@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form"
 import { getExpenses, createExpense, updateExpense, deleteExpense, getCategories, getAccounts } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
 import { formatNumber, unformatNumber } from "../utils/numberFormat"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, addDays } from "date-fns"
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([])
@@ -234,7 +234,7 @@ const Expenses = () => {
                       Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {format(new Date(expense.fecha), "dd/MM/yyyy")}
+                      Date: {format(addDays(parseISO(expense.fecha), 1), "dd/MM/yyyy")}
                     </p>
                   </div>
                   <div className="flex space-x-2">
