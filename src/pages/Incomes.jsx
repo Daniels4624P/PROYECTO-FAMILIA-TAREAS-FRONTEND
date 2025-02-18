@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
-import { getIncomes, createIncome, updateIncome, deleteIncome, getAccounts } from "../utils/api"
+import { getIncomes, createIncome, updateIncome, deleteIncome, getAccounts, getCategories } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
 import { formatNumber, unformatNumber } from "../utils/numberFormat"
 
 const Incomes = () => {
   const [incomes, setIncomes] = useState([])
+  const [categories, setCategories] = useState([])
   const [accounts, setAccounts] = useState([])
   const [editingIncome, setEditingIncome] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -22,6 +23,7 @@ const Incomes = () => {
 
   useEffect(() => {
     fetchIncomes()
+    fetchCategories()
     fetchAccounts()
   }, [])
 
@@ -33,6 +35,15 @@ const Incomes = () => {
       console.error("Error fetching incomes:", error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const response = await getCategories()
+      setCategories(response.data)
+    } catch (error) {
+      console.error("Error fetching categories:", error)
     }
   }
 
@@ -55,6 +66,7 @@ const Incomes = () => {
       ...data,
       valor: numericValue, // Asegurar número
       cuentaId: Number(data.cuentaId),
+      categoriaId: Number(data.categoriaId),
       fecha: new Date(data.fecha + "T00:00:00.000Z").toISOString(),
     }
     
@@ -76,6 +88,7 @@ const Incomes = () => {
     setEditingIncome(income)
     setValue("description", income.description)
     setValue("valor", income.valor.toString())
+    setValue("categoriaId", income.categoriaId)
     setValue("cuentaId", income.cuentaId)
     setValue("fecha", income.fecha.split("T")[0])
   }
@@ -131,6 +144,24 @@ const Incomes = () => {
               )}
             />
             {errors.valor && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.valor.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Category</label>
+            <select
+              {...register("categoriaId", { required: "Category is required" })}
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+            >
+              <option value="">Select category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            {errors.categoriaId && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.categoriaId.message}</p>
+            )}
           </div>
 
           <div>
