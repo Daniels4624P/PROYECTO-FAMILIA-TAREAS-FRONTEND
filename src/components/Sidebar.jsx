@@ -36,6 +36,7 @@ function Sidebar() {
               >
                 Profile
               </Link>
+
               {/* Finanzas */}
               <div className="mt-4 mb-2 px-4">
                 <h3 className="text-sm font-semibold text-notion-text dark:text-notion-text-dark">Finances</h3>
@@ -47,6 +48,39 @@ function Sidebar() {
               >
                 Accounts
               </Link>
+              <Link
+                to="/expenses"
+                onClick={closeSidebar}
+                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+              >
+                Expenses
+              </Link>
+              <Link
+                to="/incomes"
+                onClick={closeSidebar}
+                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+              >
+                Incomes
+              </Link>
+              <Link
+                to="/categories"
+                onClick={closeSidebar}
+                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+              >
+                Categories
+              </Link>
+              <Link
+                to="/finances"
+                onClick={closeSidebar}
+                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+              >
+                Export Finances
+              </Link>
+
+              {/* Tareas */}
+              <div className="mt-4 mb-2 px-4">
+                <h3 className="text-sm font-semibold text-notion-text dark:text-notion-text-dark">Tasks</h3>
+              </div>
               <Link
                 to="/projects"
                 onClick={closeSidebar}
@@ -69,18 +103,23 @@ function Sidebar() {
                 Tasks
               </Link>
               <Link
-                to="/users/points"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
-              >
-                User Points
-              </Link>
-              <Link
                 to="/tasks/monthly"
                 onClick={closeSidebar}
                 className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 Monthly Graphic
+              </Link>
+
+              {/* Users */}
+              <div className="mt-4 mb-2 px-4">
+                <h3 className="text-sm font-semibold text-notion-text dark:text-notion-text-dark">Users</h3>
+              </div>
+              <Link
+                to="/users/points"
+                onClick={closeSidebar}
+                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+              >
+                User Points
               </Link>
               {user.isAdmin && (
                 <Link
