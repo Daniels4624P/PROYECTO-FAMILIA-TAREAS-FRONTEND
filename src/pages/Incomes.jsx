@@ -231,7 +231,7 @@ const Incomes = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{income.description}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Category: {expense.category?.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Category: {income.category?.name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Account: {income.account?.name}</p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Amount: {formatNumber(income.valor.toString())}
