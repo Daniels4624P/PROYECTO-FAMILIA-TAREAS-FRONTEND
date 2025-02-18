@@ -111,5 +111,84 @@ export const sendRecoveryEmail = (email) => api.post("/auth/recovery", { email }
 
 export const changePassword = (token, newPassword) => api.post("/auth/change-password", { token, newPassword })
 
+// Accounts
+export const createAccount = (accountData) => {
+  return api.post('/accounts', accountData);
+};
 
-export default api
+export const getAccounts = () => {
+  return api.get('/accounts');
+};
+
+export const getAccount = (id) => {
+  return api.get(`/accounts/${id}`);
+};
+
+export const updateAccount = (id, accountData) => {
+  return api.patch(`/accounts/${id}`, accountData);
+};
+
+export const deleteAccount = (id) => {
+  return api.delete(`/accounts/${id}`);
+};
+
+// Expenses
+export const createExpense = (expenseData) => {
+  return api.post('/expenses', expenseData);
+};
+
+export const getExpenses = () => {
+  return api.get('/expenses');
+};
+
+export const getExpense = (id) => {
+  return api.get(`/expenses/${id}`);
+};
+
+export const updateExpense = (id, expenseData) => {
+  return api.patch(`/expenses/${id}`, expenseData);
+};
+
+export const deleteExpense = (id) => {
+  return api.delete(`/expenses/${id}`);
+};
+
+// Categories
+export const createCategory = (categoryData) => {
+  return api.post('/categories', categoryData);
+};
+
+export const getCategories = () => {
+  return api.get('/categories');
+};
+
+// Finances
+export const exportFinances = (year, month) => {
+  return api.get('/finances/export', {
+    params: { year, month },
+    responseType: 'blob', // Important for downloading files
+  });
+};
+
+// Incomes
+export const createIncome = (incomeData) => {
+  return api.post('/incomes', incomeData);
+};
+
+export const getIncomes = () => {
+  return api.get('/incomes');
+};
+
+export const getIncome = (id) => {
+  return api.get(`/incomes/${id}`);
+};
+
+export const updateIncome = (id, incomeData) => {
+  return api.patch(`/incomes/${id}`, incomeData);
+};
+
+export const deleteIncome = (id) => {
+  return api.delete(`/incomes/${id}`);
+};
+
+export default api;
