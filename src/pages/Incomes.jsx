@@ -48,7 +48,7 @@ const Incomes = () => {
   const onSubmit = async (data) => {
     const formattedData = {
       ...data,
-      valor: Number(unformatNumber(data.valor)),
+      valor: unformatNumber(data.valor),
       cuentaId: Number(data.cuentaId),
     }
 
