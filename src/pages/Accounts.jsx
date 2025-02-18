@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { getAccounts, createAccount, updateAccount, deleteAccount } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
+import { formatNumber, unformatNumber } from "../utils/numberFormat"
 
 const Accounts = () => {
   const [accounts, setAccounts] = useState([])
@@ -14,6 +15,7 @@ const Accounts = () => {
     handleSubmit,
     reset,
     setValue,
+    control,
     formState: { errors },
   } = useForm()
 
@@ -33,11 +35,16 @@ const Accounts = () => {
   }
 
   const onSubmit = async (data) => {
+    const formattedData = {
+      ...data,
+      saldo: unformatNumber(data.saldo),
+    }
+
     try {
       if (editingAccount) {
-        await updateAccount(editingAccount.id, data)
+        await updateAccount(editingAccount.id, formattedData)
       } else {
-        await createAccount(data)
+        await createAccount(formattedData)
       }
       reset()
       setEditingAccount(null)
@@ -51,7 +58,7 @@ const Accounts = () => {
     setEditingAccount(account)
     setValue("name", account.name)
     setValue("tipo", account.tipo)
-    setValue("saldo", account.saldo)
+    setValue("saldo", formatNumber(account.saldo.toString()))
   }
 
   const handleDelete = async (id) => {
@@ -98,10 +105,21 @@ const Accounts = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Initial Balance</label>
-            <input
-              type="number"
-              {...register("saldo", { required: "Initial balance is required" })}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+            <Controller
+              name="saldo"
+              control={control}
+              rules={{ required: "Initial balance is required" }}
+              render={({ field }) => (
+                <input
+                  type="text"
+                  {...field}
+                  onChange={(e) => {
+                    const formatted = formatNumber(e.target.value)
+                    field.onChange(formatted)
+                  }}
+                  className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+                />
+              )}
             />
             {errors.saldo && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.saldo.message}</p>}
           </div>
@@ -146,7 +164,9 @@ const Accounts = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{account.name}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Type: {account.tipo}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Balance: ${account.saldo}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Balance: ${formatNumber(account.saldo.toString())}
+                    </p>
                   </div>
                   <div className="flex space-x-2">
                     <button
