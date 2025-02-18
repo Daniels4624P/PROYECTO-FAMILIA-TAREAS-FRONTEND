@@ -50,8 +50,8 @@ const Accounts = () => {
   const handleEdit = (account) => {
     setEditingAccount(account)
     setValue("name", account.name)
-    setValue("type", account.type)
-    setValue("balance", account.balance)
+    setValue("tipo", account.tipo)
+    setValue("saldo", account.saldo)
   }
 
   const handleDelete = async (id) => {
@@ -85,26 +85,25 @@ const Accounts = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Account Type</label>
             <select
-              {...register("type", { required: "Account type is required" })}
+              {...register("tipo", { required: "Account type is required" })}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             >
               <option value="">Select type</option>
-              <option value="Credito">Credito</option>
-              <option value="Corriente">Debito</option>
               <option value="Ahorros">Ahorros</option>
+              <option value="Corriente">Corriente</option>
+              <option value="Credito">Crédito</option>
             </select>
-            {errors.type && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.type.message}</p>}
+            {errors.tipo && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.tipo.message}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Initial Balance</label>
             <input
               type="number"
-              step="0.01"
-              {...register("balance", { required: "Initial balance is required" })}
+              {...register("saldo", { required: "Initial balance is required" })}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             />
-            {errors.balance && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.balance.message}</p>}
+            {errors.saldo && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.saldo.message}</p>}
           </div>
 
           <div className="flex justify-end space-x-3">
@@ -146,8 +145,8 @@ const Accounts = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{account.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Type: {account.type}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Balance: ${account.balance}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Type: {account.tipo}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Balance: ${account.saldo}</p>
                   </div>
                   <div className="flex space-x-2">
                     <button
