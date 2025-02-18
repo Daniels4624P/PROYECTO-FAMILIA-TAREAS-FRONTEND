@@ -234,7 +234,7 @@ const Expenses = () => {
                       Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {format(addDays(parseISO(expense.fecha), 1), "dd/MM/yyyy")}
+                      Date: {format(expense.fecha), "dd/MM/yyyy")}
                     </p>
                   </div>
                   <div className="flex space-x-2">
