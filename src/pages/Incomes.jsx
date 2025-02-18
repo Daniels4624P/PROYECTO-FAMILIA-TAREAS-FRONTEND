@@ -46,13 +46,10 @@ const Incomes = () => {
   }
 
   const onSubmit = async (data) => {
-    console.log("Valor antes de procesar:", data.valor, "Tipo:", typeof data.valor)
 
     const rawValue = unformatNumber(data.valor) // Remueve formato de número
-    console.log("Valor después de unformatNumber:", rawValue, "Tipo:", typeof rawValue)
 
     const numericValue = Number(rawValue) // Convertir a número
-    console.log("Valor final convertido:", numericValue, "Tipo:", typeof numericValue)
 
     const formattedData = {
       ...data,
