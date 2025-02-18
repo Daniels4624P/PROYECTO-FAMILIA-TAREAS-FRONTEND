@@ -56,8 +56,6 @@ const Incomes = () => {
       valor: numericValue, // Asegurar número
       cuentaId: Number(data.cuentaId),
     }
-
-    console.log("Datos finales a enviar:", formattedData)
     
     try {
       if (editingIncome) {
