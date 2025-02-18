@@ -49,6 +49,7 @@ const Incomes = () => {
     const formattedData = {
       ...data,
       valor: unformatNumber(data.valor),
+      cuentaId: Number(data.cuentaId),
     }
 
     try {
