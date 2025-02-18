@@ -55,6 +55,14 @@ const Categories = () => {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Description</label>
+            <textarea
+              {...register("description")}
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+            />
+          </div>
+
+          <div>
             <button
               type="submit"
               className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-notion-orange hover:bg-notion-orange-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-notion-orange"
@@ -79,6 +87,9 @@ const Categories = () => {
                 className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-[#2D2D2D]"
               >
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{category.name}</h3>
+                {category.description && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{category.description}</p>
+                )}
               </div>
             ))}
           </div>
