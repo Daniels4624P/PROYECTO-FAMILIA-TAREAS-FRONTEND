@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { getIncomes, createIncome, updateIncome, deleteIncome, getAccounts } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
+import { formatNumber, unformatNumber } from "../utils/numberFormat"
 
 const Incomes = () => {
   const [incomes, setIncomes] = useState([])
@@ -15,6 +16,7 @@ const Incomes = () => {
     handleSubmit,
     reset,
     setValue,
+    control,
     formState: { errors },
   } = useForm()
 
@@ -44,11 +46,16 @@ const Incomes = () => {
   }
 
   const onSubmit = async (data) => {
+    const formattedData = {
+      ...data,
+      valor: unformatNumber(data.valor),
+    }
+
     try {
       if (editingIncome) {
-        await updateIncome(editingIncome.id, data)
+        await updateIncome(editingIncome.id, formattedData)
       } else {
-        await createIncome(data)
+        await createIncome(formattedData)
       }
       reset()
       setEditingIncome(null)
@@ -61,7 +68,7 @@ const Incomes = () => {
   const handleEdit = (income) => {
     setEditingIncome(income)
     setValue("description", income.description)
-    setValue("valor", income.valor)
+    setValue("valor", formatNumber(income.valor.toString()))
     setValue("cuentaId", income.cuentaId)
     setValue("fecha", income.fecha.split("T")[0])
   }
@@ -98,10 +105,21 @@ const Incomes = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Amount</label>
-            <input
-              type="number"
-              {...register("valor", { required: "Amount is required", min: 0 })}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+            <Controller
+              name="valor"
+              control={control}
+              rules={{ required: "Amount is required" }}
+              render={({ field }) => (
+                <input
+                  type="text"
+                  {...field}
+                  onChange={(e) => {
+                    const formatted = formatNumber(e.target.value)
+                    field.onChange(formatted)
+                  }}
+                  className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+                />
+              )}
             />
             {errors.valor && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.valor.message}</p>}
           </div>
@@ -174,7 +192,9 @@ const Incomes = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{income.description}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Account: {income.account?.name}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Amount: ${income.valor}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Amount: ${formatNumber(income.valor.toString())}
+                    </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Date: {new Date(income.fecha).toLocaleDateString()}
                     </p>
