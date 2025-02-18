@@ -89,10 +89,9 @@ const Accounts = () => {
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             >
               <option value="">Select type</option>
-              <option value="cash">Cash</option>
-              <option value="credit_card">Credit Card</option>
-              <option value="debit_card">Debit Card</option>
-              <option value="savings">Savings</option>
+              <option value="Credito">Credito</option>
+              <option value="Corriente">Debito</option>
+              <option value="Ahorros">Ahorros</option>
             </select>
             {errors.type && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.type.message}</p>}
           </div>
