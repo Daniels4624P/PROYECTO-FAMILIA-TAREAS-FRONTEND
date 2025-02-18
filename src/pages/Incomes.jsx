@@ -55,7 +55,7 @@ const Incomes = () => {
       ...data,
       valor: numericValue, // Asegurar número
       cuentaId: Number(data.cuentaId),
-      fecha: new Date(data.fecha).toISOString(),
+      fecha: new Date(data.fecha + "T00:00:00.000Z").toISOString(),
     }
     
     try {
@@ -205,7 +205,7 @@ const Incomes = () => {
                       Amount: {formatNumber(income.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {new Date(income.fecha).toLocaleDateString()}
+                      Date: {income.fecha.split('T')[0].split('-').reverse().join('/')}
                     </p>
                   </div>
                   <div className="flex space-x-2">
