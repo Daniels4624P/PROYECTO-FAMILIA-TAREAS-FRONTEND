@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { getExpenses, createExpense, updateExpense, deleteExpense, getCategories, getAccounts } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
+import { formatNumber, unformatNumber } from "../utils/numberFormat"
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([])
@@ -16,6 +17,7 @@ const Expenses = () => {
     handleSubmit,
     reset,
     setValue,
+    control,
     formState: { errors },
   } = useForm()
 
@@ -55,11 +57,16 @@ const Expenses = () => {
   }
 
   const onSubmit = async (data) => {
+    const formattedData = {
+      ...data,
+      valor: unformatNumber(data.valor),
+    }
+
     try {
       if (editingExpense) {
-        await updateExpense(editingExpense.id, data)
+        await updateExpense(editingExpense.id, formattedData)
       } else {
-        await createExpense(data)
+        await createExpense(formattedData)
       }
       reset()
       setEditingExpense(null)
@@ -72,7 +79,7 @@ const Expenses = () => {
   const handleEdit = (expense) => {
     setEditingExpense(expense)
     setValue("description", expense.description)
-    setValue("valor", expense.valor)
+    setValue("valor", formatNumber(expense.valor.toString()))
     setValue("categoriaId", expense.categoriaId)
     setValue("cuentaId", expense.cuentaId)
     setValue("fecha", expense.fecha.split("T")[0])
@@ -110,10 +117,21 @@ const Expenses = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Amount</label>
-            <input
-              type="number"
-              {...register("valor", { required: "Amount is required", min: 0 })}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+            <Controller
+              name="valor"
+              control={control}
+              rules={{ required: "Amount is required" }}
+              render={({ field }) => (
+                <input
+                  type="text"
+                  {...field}
+                  onChange={(e) => {
+                    const formatted = formatNumber(e.target.value)
+                    field.onChange(formatted)
+                  }}
+                  className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+                />
+              )}
             />
             {errors.valor && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.valor.message}</p>}
           </div>
@@ -205,7 +223,9 @@ const Expenses = () => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{expense.description}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Category: {expense.category?.name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Account: {expense.account?.name}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Amount: ${expense.valor}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Amount: ${formatNumber(expense.valor.toString())}
+                    </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Date: {new Date(expense.fecha).toLocaleDateString()}
                     </p>
