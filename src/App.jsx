@@ -14,6 +14,7 @@ import UsersPoints from "./pages/UsersPoints"
 import TasksChart from "./pages/TasksChart"
 import PasswordRecovery from "./pages/PasswordRecovery"
 import ChangePassword from "./pages/ChangePassword"
+import Accounts from "./pages/Accounts"
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
                 <Route path="/tasks/monthly" element={<TasksChart />} />
                 <Route path="/password-recovery" element={<PasswordRecovery />} />
                 <Route path="/recovery" element={<ChangePassword />} />
+                <Route path="/accounts" element={<Accounts />} />
               </Routes>
             </div>
           </main>
