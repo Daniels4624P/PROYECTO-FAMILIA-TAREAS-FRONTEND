@@ -15,6 +15,10 @@ import TasksChart from "./pages/TasksChart"
 import PasswordRecovery from "./pages/PasswordRecovery"
 import ChangePassword from "./pages/ChangePassword"
 import Accounts from "./pages/Accounts"
+import Expenses from "./pages/Expenses"
+import Categories from "./pages/Categories"
+import Finances from "./pages/Finances"
+import Incomes from "./pages/Incomes"
 
 function App() {
   return (
@@ -39,6 +43,10 @@ function App() {
                 <Route path="/password-recovery" element={<PasswordRecovery />} />
                 <Route path="/recovery" element={<ChangePassword />} />
                 <Route path="/accounts" element={<Accounts />} />
+                <Route path="/expenses" element={<Expenses />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/finances" element={<Finances />} />
+                <Route path="/incomes" element={<Incomes />} />
               </Routes>
             </div>
           </main>
