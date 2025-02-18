@@ -36,6 +36,17 @@ function Sidebar() {
               >
                 Profile
               </Link>
+              {/* Finanzas */}
+              <div className="mt-4 mb-2 px-4">
+                <h3 className="text-sm font-semibold text-notion-text dark:text-notion-text-dark">Finances</h3>
+              </div>
+              <Link
+                to="/accounts"
+                onClick={closeSidebar}
+                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+              >
+                Accounts
+              </Link>
               <Link
                 to="/projects"
                 onClick={closeSidebar}
