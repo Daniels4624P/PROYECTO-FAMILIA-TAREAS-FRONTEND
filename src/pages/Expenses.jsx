@@ -234,7 +234,7 @@ const Expenses = () => {
                       Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {format(parseISO(expense.fecha), "dd/MM/yyyy")}
+                      Date: {format(parseISO(expense.fecha), "dd/MM/yyyy", { timeZone: 'UTC' })}
                     </p>
                   </div>
                   <div className="flex space-x-2">
