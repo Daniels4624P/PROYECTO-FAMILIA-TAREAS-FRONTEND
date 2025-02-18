@@ -32,7 +32,6 @@ const Expenses = () => {
     try {
       const response = await getExpenses()
       setExpenses(response.data)
-      console.log(response.data)
     } catch (error) {
       console.error("Error fetching expenses:", error)
     } finally {
@@ -64,6 +63,7 @@ const Expenses = () => {
       valor: unformatNumber(data.valor),
       fecha: new Date(data.fecha + "T00:00:00.000Z").toISOString(),
     }
+    console.log(formattedData)
 
     try {
       if (editingExpense) {
