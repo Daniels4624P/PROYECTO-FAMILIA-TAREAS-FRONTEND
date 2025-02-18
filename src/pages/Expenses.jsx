@@ -234,7 +234,7 @@ const Expenses = () => {
                       Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {expense.fecha}
+                      Date: {expense.fecha.split('T')[0].split('-').reverse().join('/')}
                     </p>
                   </div>
                   <div className="flex space-x-2">
