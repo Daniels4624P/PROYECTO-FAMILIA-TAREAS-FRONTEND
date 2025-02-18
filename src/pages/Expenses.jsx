@@ -63,7 +63,6 @@ const Expenses = () => {
       valor: unformatNumber(data.valor),
       fecha: new Date(data.fecha + "T00:00:00.000Z").toISOString(),
     }
-    console.log(formattedData)
 
     try {
       if (editingExpense) {
