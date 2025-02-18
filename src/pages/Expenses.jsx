@@ -72,10 +72,10 @@ const Expenses = () => {
   const handleEdit = (expense) => {
     setEditingExpense(expense)
     setValue("description", expense.description)
-    setValue("amount", expense.amount)
-    setValue("categoryId", expense.categoryId)
-    setValue("accountId", expense.accountId)
-    setValue("date", expense.date)
+    setValue("valor", expense.valor)
+    setValue("categoriaId", expense.categoriaId)
+    setValue("cuentaId", expense.cuentaId)
+    setValue("fecha", expense.fecha.split("T")[0])
   }
 
   const handleDelete = async (id) => {
@@ -112,17 +112,16 @@ const Expenses = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Amount</label>
             <input
               type="number"
-              step="0.01"
-              {...register("amount", { required: "Amount is required", min: 0 })}
+              {...register("valor", { required: "Amount is required", min: 0 })}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             />
-            {errors.amount && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.amount.message}</p>}
+            {errors.valor && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.valor.message}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Category</label>
             <select
-              {...register("categoryId", { required: "Category is required" })}
+              {...register("categoriaId", { required: "Category is required" })}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             >
               <option value="">Select category</option>
@@ -132,15 +131,15 @@ const Expenses = () => {
                 </option>
               ))}
             </select>
-            {errors.categoryId && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.categoryId.message}</p>
+            {errors.categoriaId && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.categoriaId.message}</p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Account</label>
             <select
-              {...register("accountId", { required: "Account is required" })}
+              {...register("cuentaId", { required: "Account is required" })}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             >
               <option value="">Select account</option>
@@ -150,8 +149,8 @@ const Expenses = () => {
                 </option>
               ))}
             </select>
-            {errors.accountId && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.accountId.message}</p>
+            {errors.cuentaId && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.cuentaId.message}</p>
             )}
           </div>
 
@@ -159,10 +158,10 @@ const Expenses = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Date</label>
             <input
               type="date"
-              {...register("date", { required: "Date is required" })}
+              {...register("fecha", { required: "Date is required" })}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             />
-            {errors.date && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.date.message}</p>}
+            {errors.fecha && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.fecha.message}</p>}
           </div>
 
           <div className="flex justify-end space-x-3">
@@ -206,9 +205,9 @@ const Expenses = () => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{expense.description}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Category: {expense.category?.name}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Account: {expense.account?.name}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Amount: ${expense.amount}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Amount: ${expense.valor}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {new Date(expense.date).toLocaleDateString()}
+                      Date: {new Date(expense.fecha).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex space-x-2">
