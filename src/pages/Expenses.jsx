@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form"
 import { getExpenses, createExpense, updateExpense, deleteExpense, getCategories, getAccounts } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
 import { formatNumber, unformatNumber } from "../utils/numberFormat"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, addHours } from "date-fns"
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([])
@@ -61,7 +61,7 @@ const Expenses = () => {
     const formattedData = {
       ...data,
       valor: unformatNumber(data.valor),
-      fecha: new Date(data.fecha).toISOString(),
+      fecha: addHours(new Date(data.fecha), 12).toISOString(),
     }
 
     try {
@@ -84,7 +84,7 @@ const Expenses = () => {
     setValue("valor", expense.valor.toString())
     setValue("categoriaId", expense.categoriaId)
     setValue("cuentaId", expense.cuentaId)
-    setValue("fecha", format(parseISO(expense.fecha), "yyyy-MM-dd"))
+    setValue("fecha", addHours(parseISO(expense.fecha), 12).toISOString().split('T')[0])
   }
 
   const handleDelete = async (id) => {
