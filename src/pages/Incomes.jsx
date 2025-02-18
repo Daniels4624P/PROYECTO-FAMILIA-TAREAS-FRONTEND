@@ -68,7 +68,7 @@ const Incomes = () => {
   const handleEdit = (income) => {
     setEditingIncome(income)
     setValue("description", income.description)
-    setValue("valor", formatNumber(income.valor.toString()))
+    setValue("valor", income.valor.toString())
     setValue("cuentaId", income.cuentaId)
     setValue("fecha", income.fecha.split("T")[0])
   }
@@ -114,9 +114,11 @@ const Incomes = () => {
                   type="text"
                   {...field}
                   onChange={(e) => {
-                    const formatted = formatNumber(e.target.value)
+                    const rawValue = e.target.value
+                    const formatted = formatNumber(rawValue)
                     field.onChange(formatted)
                   }}
+                  value={formatNumber(field.value)}
                   className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
                 />
               )}
