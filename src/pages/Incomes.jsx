@@ -55,6 +55,7 @@ const Incomes = () => {
       ...data,
       valor: numericValue, // Asegurar número
       cuentaId: Number(data.cuentaId),
+      fecha: new Date(data.fecha).toISOString(),
     }
     
     try {
