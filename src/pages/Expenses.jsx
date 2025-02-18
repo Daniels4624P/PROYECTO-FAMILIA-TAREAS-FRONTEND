@@ -61,7 +61,7 @@ const Expenses = () => {
     const formattedData = {
       ...data,
       valor: unformatNumber(data.valor),
-      fecha: new Date(data.fecha + "T00:00:00").toISOString(),
+      fecha: new Date(data.fecha + "T00:00:00.000Z").toISOString(),
     }
 
     try {
@@ -234,7 +234,7 @@ const Expenses = () => {
                       Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {format(parseISO(expense.fecha), "dd/MM/yyyy", { timeZone: 'UTC' })}
+                      Date: {format(new Date(expense.fecha), "dd/MM/yyyy")}
                     </p>
                   </div>
                   <div className="flex space-x-2">
