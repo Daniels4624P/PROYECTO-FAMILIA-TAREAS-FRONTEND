@@ -192,7 +192,7 @@ export const deleteIncome = (id) => {
 };
 
 export const getAccountStatistics = () => {
-  return api.get("/accounts/statistics")
+  return api.get("/accounts/statistics/of/user")
 }
 
 export default api;
