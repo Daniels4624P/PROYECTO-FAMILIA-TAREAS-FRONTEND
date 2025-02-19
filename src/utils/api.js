@@ -163,12 +163,20 @@ export const getCategories = () => {
 };
 
 // Finances
-export const exportFinances = (year, month) => {
-  return api.get('/finances/export', {
-    params: { year, month },
-    responseType: 'blob', // Important for downloading files
-  });
-};
+export const exportFinances = async (year, month, type) => {
+    try {
+      const response = await axios.get(`${API_URL}/finances/export?year=${year}&month=${month}&type=${type}`, {
+        responseType: 'blob', // Important for handling file downloads
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming you're using JWT
+        }
+      });
+      return response;
+    } catch (error) {
+      console.error("Error exporting finances:", error);
+      throw error;
+    }
+  };
 
 // Incomes
 export const createIncome = (incomeData) => {
