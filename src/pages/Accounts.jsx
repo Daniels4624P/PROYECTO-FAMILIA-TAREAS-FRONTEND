@@ -59,8 +59,8 @@ const Accounts = () => {
     setEditingAccount(account)
     setValue("name", account.name)
     setValue("tipo", account.tipo)
-    setValue("saldo", account.saldo.toString())
-    setValue("public", account.public.toString())
+    setValue("saldo", account.saldo ? account.saldo.toString() : "")
+    setValue("public", account.public ? "true" : "false")
   }
 
   const handleDelete = async (id) => {
@@ -183,12 +183,9 @@ const Accounts = () => {
                       Balance: {formatNumber(account.saldo.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Public: {account.public ? "Yes" : "No"}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Created: {account.createdAt.split("T")[0].split("-").reverse().join("/")}
-                    </p>
-                    {account.updatedAt && (
+                    {account.createdAt && (
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Last Updated: {account.updatedAt.split("T")[0].split("-").reverse().join("/")}
+                        Created: {account.createdAt.split("T")[0].split("-").reverse().join("/")}
                       </p>
                     )}
                   </div>
