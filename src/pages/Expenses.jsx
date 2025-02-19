@@ -89,7 +89,7 @@ const Expenses = () => {
     setValue("valor", expense.valor.toString())
     setValue("categoriaId", expense.categoriaId)
     setValue("cuentaId", expense.cuentaId)
-    setValue("fecha", expense.fecha.split("T")[0])
+    setValue("fecha", format(expense.fecha, "yyyy-MM-dd"))
     setValue("destinoId", expense.destinoId || "")
   }
 
