@@ -20,6 +20,7 @@ const Finances = () => {
   const [accountStats, setAccountStats] = useState([])
   const [chartData, setChartData] = useState(null)
   const [statsError, setStatsError] = useState("")
+  const [transactionType, setTransactionType] = useState("public") // Tipo de transacción por defecto
 
   useEffect(() => {
     fetchAccountStatistics()
@@ -95,7 +96,8 @@ const Finances = () => {
     setIsLoading(true)
     setMessage("")
     try {
-      const response = await exportFinances(data.year, data.month)
+      // Modificar la llamada a exportFinances para incluir el tipo de transacción
+      const response = await exportFinances(data.year, data.month, transactionType);
 
       // Create a blob from the response data
       const blob = new Blob([response.data], { type: "text/csv" })
@@ -199,7 +201,18 @@ const Finances = () => {
               {errors.month && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.month.message}</p>}
             </div>
           </div>
-
+          {/* Selector de tipo de transacción */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Transaction Type</label>
+            <select
+              value={transactionType}
+              onChange={(e) => setTransactionType(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+            >
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+          </div>
           <div>
             <button
               type="submit"
@@ -216,9 +229,7 @@ const Finances = () => {
               )}
             </button>
           </div>
-        </form>
-
-        {message && (
+        </form>... {message && (
           <div
             className={`mt-4 p-4 rounded-md ${
               message.includes("Error")
