@@ -191,4 +191,8 @@ export const deleteIncome = (id) => {
   return api.delete(`/incomes/${id}`);
 };
 
+export const getAccountStatistics = () => {
+  return api.get("/accounts/statistics")
+}
+
 export default api;
