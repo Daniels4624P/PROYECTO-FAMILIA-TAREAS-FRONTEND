@@ -19,6 +19,7 @@ const Finances = () => {
   const [message, setMessage] = useState("")
   const [accountStats, setAccountStats] = useState([])
   const [chartData, setChartData] = useState(null)
+  const [statsError, setStatsError] = useState("")
 
   useEffect(() => {
     fetchAccountStatistics()
@@ -26,15 +27,25 @@ const Finances = () => {
 
   const fetchAccountStatistics = async () => {
     try {
+      setStatsError("")
+      setIsLoading(true)
       const response = await getAccountStatistics()
       setAccountStats(response.data)
       prepareChartData(response.data)
     } catch (error) {
       console.error("Error fetching account statistics:", error)
+      setStatsError(`Error loading account statistics: ${error.response?.data?.message || error.message}`)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const prepareChartData = (stats) => {
+    if (!stats || stats.length === 0) {
+      setStatsError("No account statistics available.")
+      return
+    }
+
     const labels = stats.map((stat) => stat.cuentaNombre)
     const incomeData = stats.map((stat) => stat.totalIncomes)
     const expenseData = stats.map((stat) => stat.totalExpenses)
@@ -102,7 +113,7 @@ const Finances = () => {
       setMessage("File downloaded successfully!")
     } catch (error) {
       console.error("Error exporting finances:", error)
-      setMessage("Error downloading file. Please try again.")
+      setMessage(`Error downloading file: ${error.response?.data?.message || error.message}`)
     } finally {
       setIsLoading(false)
     }
@@ -112,7 +123,14 @@ const Finances = () => {
     <div className="space-y-6">
       <div className="bg-white dark:bg-[#202020] p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Account Statistics</h2>
-        {chartData ? (
+        {statsError && (
+          <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200 rounded-md">
+            {statsError}
+          </div>
+        )}
+        {isLoading ? (
+          <p className="text-gray-600 dark:text-gray-400">Loading account statistics...</p>
+        ) : chartData ? (
           <div className="w-full max-w-xl mx-auto">
             <Pie
               data={chartData}
@@ -138,7 +156,7 @@ const Finances = () => {
             />
           </div>
         ) : (
-          <p className="text-gray-600 dark:text-gray-400">Loading account statistics...</p>
+          <p className="text-gray-600 dark:text-gray-400">No account statistics available.</p>
         )}
       </div>
 
@@ -217,4 +235,3 @@ const Finances = () => {
 }
 
 export default Finances
-
