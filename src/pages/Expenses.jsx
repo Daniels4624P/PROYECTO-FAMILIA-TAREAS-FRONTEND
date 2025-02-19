@@ -13,6 +13,7 @@ const Expenses = () => {
   const [accounts, setAccounts] = useState([])
   const [editingExpense, setEditingExpense] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSelectedAccountPublic, setIsSelectedAccountPublic] = useState(false) // Update 1
   const {
     register,
     handleSubmit,
@@ -54,7 +55,7 @@ const Expenses = () => {
   const fetchAccounts = async () => {
     try {
       const response = await getAccounts()
-      setAccounts(response.data)
+      setAccounts(response.data.map((account) => ({ ...account, isPublic: account.public }))) // Update 2
     } catch (error) {
       console.error("Error fetching accounts:", error)
     }
@@ -65,7 +66,7 @@ const Expenses = () => {
       ...data,
       valor: unformatNumber(data.valor),
       fecha: new Date(data.fecha).toISOString(),
-      destinoId: data.destinoId || null,
+      destinoId: isSelectedAccountPublic ? data.destinoId : null, // Update 6
     }
 
     try {
@@ -101,6 +102,13 @@ const Expenses = () => {
         console.error("Error deleting expense:", error)
       }
     }
+  }
+
+  const handleSourceAccountChange = (event) => {
+    // Update 3
+    const selectedAccountId = event.target.value
+    const selectedAccount = accounts.find((account) => account.id === Number.parseInt(selectedAccountId))
+    setIsSelectedAccountPublic(selectedAccount ? selectedAccount.isPublic : false)
   }
 
   return (
@@ -167,6 +175,10 @@ const Expenses = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Source Account</label>
             <select
               {...register("cuentaId", { required: "Source account is required" })}
+              onChange={(e) => {
+                register("cuentaId").onChange(e)
+                handleSourceAccountChange(e) // Update 4
+              }}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             >
               <option value="">Select account</option>
@@ -196,22 +208,25 @@ const Expenses = () => {
 
           {/* Removed Public field */}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Destination Account (Optional)
-            </label>
-            <select
-              {...register("destinoId")}
-              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
-            >
-              <option value="">Select destination account (optional)</option>
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {isSelectedAccountPublic && ( // Update 5
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Destination Account</label>
+              <select
+                {...register("destinoId", { required: "Destination account is required for public accounts" })}
+                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+              >
+                <option value="">Select destination account</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                ))}
+              </select>
+              {errors.destinoId && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.destinoId.message}</p>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end space-x-3">
             {editingExpense && (
@@ -265,7 +280,7 @@ const Expenses = () => {
                       Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {format(parseISO(expense.fecha), "dd/MM/yyyy")}
+                      Date: {expense.fecha.split("T")[0].split("-").reverse().join("/")} {/*Update 7*/}
                     </p>
                     {/* Removed Public display */}
                   </div>
