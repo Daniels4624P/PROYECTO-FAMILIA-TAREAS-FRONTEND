@@ -12,6 +12,7 @@ const Incomes = () => {
   const [accounts, setAccounts] = useState([])
   const [editingIncome, setEditingIncome] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSelectedAccountPublic, setIsSelectedAccountPublic] = useState(false)
   const {
     register,
     handleSubmit,
@@ -50,23 +51,28 @@ const Incomes = () => {
   const fetchAccounts = async () => {
     try {
       const response = await getAccounts()
-      setAccounts(response.data)
+      setAccounts(response.data.map((account) => ({ ...account, isPublic: account.public })))
     } catch (error) {
       console.error("Error fetching accounts:", error)
     }
   }
 
+  const handleSourceAccountChange = (event) => {
+    const selectedAccountId = event.target.value
+    const selectedAccount = accounts.find((account) => account.id === Number.parseInt(selectedAccountId))
+    setIsSelectedAccountPublic(selectedAccount ? selectedAccount.isPublic : false)
+  }
+
   const onSubmit = async (data) => {
-
-    const rawValue = unformatNumber(data.valor) // Remueve formato de número
-
-    const numericValue = Number(rawValue) // Convertir a número
+    const rawValue = unformatNumber(data.valor)
+    const numericValue = Number(rawValue)
 
     const formattedData = {
       ...data,
-      valor: numericValue, // Asegurar número
+      valor: numericValue,
       cuentaId: Number(data.cuentaId),
       categoriaId: Number(data.categoriaId),
+      destinoId: data.destinoId ? Number(data.destinoId) : null,
       fecha: new Date(data.fecha + "T00:00:00.000Z").toISOString(),
     }
     
@@ -79,7 +85,7 @@ const Incomes = () => {
       reset()
       setEditingIncome(null)
       fetchIncomes()
-    }   catch (error) {
+    } catch (error) {
       console.error("Error saving income:", error)
     }
   }
@@ -90,7 +96,12 @@ const Incomes = () => {
     setValue("valor", income.valor.toString())
     setValue("categoriaId", income.categoriaId)
     setValue("cuentaId", income.cuentaId)
+    setValue("destinoId", income.destinoId || "")
     setValue("fecha", income.fecha.split("T")[0])
+    
+    // Actualizar el estado de cuenta pública
+    const selectedAccount = accounts.find((account) => account.id === income.cuentaId)
+    setIsSelectedAccountPublic(selectedAccount ? selectedAccount.isPublic : false)
   }
 
   const handleDelete = async (id) => {
@@ -165,9 +176,13 @@ const Incomes = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Account</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Source Account</label>
             <select
-              {...register("cuentaId", { required: "Account is required" })}
+              {...register("cuentaId", { required: "Source account is required" })}
+              onChange={(e) => {
+                register("cuentaId").onChange(e)
+                handleSourceAccountChange(e)
+              }}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             >
               <option value="">Select account</option>
@@ -181,6 +196,26 @@ const Incomes = () => {
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.cuentaId.message}</p>
             )}
           </div>
+
+          {isSelectedAccountPublic && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Destination Account</label>
+              <select
+                {...register("destinoId", { required: "Destination account is required for public accounts" })}
+                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+              >
+                <option value="">Select destination account</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                ))}
+              </select>
+              {errors.destinoId && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.destinoId.message}</p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Date</label>
@@ -232,7 +267,12 @@ const Incomes = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{income.description}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Category: {income.category?.name}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Account: {income.account?.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Source Account: {income.accountInicio?.name}</p>
+                    {income.accountDestino && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Destination Account: {income.accountDestino.name}
+                      </p>
+                    )}
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Amount: {formatNumber(income.valor.toString())}
                     </p>
@@ -265,4 +305,3 @@ const Incomes = () => {
 }
 
 export default Incomes
-
