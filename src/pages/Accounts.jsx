@@ -38,6 +38,7 @@ const Accounts = () => {
     const formattedData = {
       ...data,
       saldo: unformatNumber(data.saldo),
+      public: data.public === "true",
     }
 
     try {
@@ -59,6 +60,7 @@ const Accounts = () => {
     setValue("name", account.name)
     setValue("tipo", account.tipo)
     setValue("saldo", account.saldo.toString())
+    setValue("public", account.public.toString())
   }
 
   const handleDelete = async (id) => {
@@ -126,6 +128,17 @@ const Accounts = () => {
             {errors.saldo && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.saldo.message}</p>}
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Public</label>
+            <select
+              {...register("public")}
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+            >
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+
           <div className="flex justify-end space-x-3">
             {editingAccount && (
               <button
@@ -169,6 +182,7 @@ const Accounts = () => {
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Balance: {formatNumber(account.saldo.toString())}
                     </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Public: {account.public ? "Yes" : "No"}</p>
                   </div>
                   <div className="flex space-x-2">
                     <button
@@ -195,3 +209,4 @@ const Accounts = () => {
 }
 
 export default Accounts
+
