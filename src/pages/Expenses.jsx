@@ -62,26 +62,26 @@ const Expenses = () => {
   }
 
   const onSubmit = async (data) => {
-    const formattedData = {
-      ...data,
-      valor: unformatNumber(data.valor),
-      fecha: new Date(data.fecha).toISOString(),
-      destinoId: isSelectedAccountPublic ? data.destinoId : null, // Update 6
-    }
-
-    try {
-      if (editingExpense) {
-        await updateExpense(editingExpense.id, formattedData)
-      } else {
-        await createExpense(formattedData)
-      }
-      reset()
-      setEditingExpense(null)
-      fetchExpenses()
-    } catch (error) {
-      console.error("Error saving expense:", error)
-    }
+  const formattedData = {
+    ...data,
+    valor: unformatNumber(data.valor),
+    fecha: new Date(data.fecha).toISOString(),
+    destinoId: data.destinoId || null, // Modificado: enviará el destinoId si existe
   }
+
+  try {
+    if (editingExpense) {
+      await updateExpense(editingExpense.id, formattedData)
+    } else {
+      await createExpense(formattedData)
+    }
+    reset()
+    setEditingExpense(null)
+    fetchExpenses()
+  } catch (error) {
+    console.error("Error saving expense:", error)
+  }
+}
 
   const handleEdit = (expense) => {
     setEditingExpense(expense)
