@@ -183,6 +183,14 @@ const Accounts = () => {
                       Balance: {formatNumber(account.saldo.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Public: {account.public ? "Yes" : "No"}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Created: {account.createdAt.split("T")[0].split("-").reverse().join("/")}
+                    </p>
+                    {account.updatedAt && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Last Updated: {account.updatedAt.split("T")[0].split("-").reverse().join("/")}
+                      </p>
+                    )}
                   </div>
                   <div className="flex space-x-2">
                     <button
