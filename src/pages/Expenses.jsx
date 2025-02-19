@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form"
 import { getExpenses, createExpense, updateExpense, deleteExpense, getCategories, getAccounts } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
 import { formatNumber, unformatNumber } from "../utils/numberFormat"
-import { format, parseISO, addDays } from "date-fns"
+import { format, parseISO } from "date-fns"
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([])
@@ -19,8 +19,11 @@ const Expenses = () => {
     reset,
     setValue,
     control,
+    watch,
     formState: { errors },
   } = useForm()
+
+  const isPublic = watch("public")
 
   useEffect(() => {
     fetchExpenses()
@@ -61,7 +64,9 @@ const Expenses = () => {
     const formattedData = {
       ...data,
       valor: unformatNumber(data.valor),
-      fecha: new Date(data.fecha + "T00:00:00.000Z").toISOString(),
+      fecha: new Date(data.fecha).toISOString(),
+      public: data.public === "true",
+      destinoId: data.public === "true" ? data.destinoId : null,
     }
 
     try {
@@ -84,7 +89,9 @@ const Expenses = () => {
     setValue("valor", expense.valor.toString())
     setValue("categoriaId", expense.categoriaId)
     setValue("cuentaId", expense.cuentaId)
-    setValue("fecha", parseISO(expense.fecha).toISOString().split('T')[0])
+    setValue("fecha", format(parseISO(expense.fecha), "yyyy-MM-dd"))
+    setValue("public", expense.public.toString())
+    setValue("destinoId", expense.destinoId)
   }
 
   const handleDelete = async (id) => {
@@ -159,9 +166,9 @@ const Expenses = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Account</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Source Account</label>
             <select
-              {...register("cuentaId", { required: "Account is required" })}
+              {...register("cuentaId", { required: "Source account is required" })}
               className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
             >
               <option value="">Select account</option>
@@ -188,6 +195,37 @@ const Expenses = () => {
             />
             {errors.fecha && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.fecha.message}</p>}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Public</label>
+            <select
+              {...register("public")}
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+            >
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+
+          {isPublic === "true" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Destination Account</label>
+              <select
+                {...register("destinoId", { required: "Destination account is required for public expenses" })}
+                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
+              >
+                <option value="">Select destination account</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name}
+                  </option>
+                ))}
+              </select>
+              {errors.destinoId && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.destinoId.message}</p>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end space-x-3">
             {editingExpense && (
@@ -229,13 +267,21 @@ const Expenses = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{expense.description}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Category: {expense.category?.name}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Account: {expense.account?.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Source Account: {expense.accountInicio?.name}
+                    </p>
+                    {expense.public && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Destination Account: {expense.accountDestino?.name}
+                      </p>
+                    )}
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Amount: {formatNumber(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Date: {expense.fecha.split('T')[0].split('-').reverse().join('/')}
+                      Date: {format(parseISO(expense.fecha), "dd/MM/yyyy")}
                     </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Public: {expense.public ? "Yes" : "No"}</p>
                   </div>
                   <div className="flex space-x-2">
                     <button
