@@ -1,28 +1,17 @@
 export const formatNumber = (value) => {
-  if (!value) return ""
+  if (!value) return "";
 
-  // Eliminar cualquier carácter que no sea número o el signo negativo (-)
-  const cleanValue = value.replace(/[^\d-]/g, "")
+  // Permitir solo números y el signo negativo
+  const cleanValue = value.replace(/[^\d-]/g, "");
 
-  // Si después de limpiar no hay números, devolver vacío
-  if (cleanValue === "" || cleanValue === "-") return ""
+  // Si no hay números, devolver vacío
+  if (cleanValue === "" || cleanValue === "-") return "";
 
   // Convertir a número
-  const number = Number.parseInt(cleanValue, 10)
+  const number = Number(cleanValue);
 
-  // Formatear con separadores de miles
-  const formattedNumber = number.toLocaleString("es-CO")
+  // Formatear con puntos para separar miles
+  const formattedNumber = number.toLocaleString("es-CO");
 
-  // Añadir el símbolo de pesos colombianos al final
-  return `${formattedNumber} COP`
-}
-
-
-export const unformatNumber = (value) => {
-  if (!value) return ""
-  // Eliminar el símbolo de peso, los puntos y cualquier espacio
-  return value
-    .replace(/\s?COP/g, "")
-    .replace(/\./g, "")
-    .trim()
-}
+  return formattedNumber; // Sin "COP" para no afectar la edición en vivo
+};
