@@ -1,22 +1,15 @@
-export const formatNumber = (value) => {
-  if (!value) {
-    return "0.00"
+export const formatNumber = (value, displayCurrency = true) => {
+  if (!value) return ""
+
+  const number = parseFloat(value); // Convertir a número para manejar negativos
+
+  // Si es NaN o no es un número finito, retornar una cadena vacía
+  if (isNaN(number) || !Number.isFinite(number)) {
+    return "";
   }
 
-  const number = parseFloat(value) // Convertir a número para manejar negativos
-  const formattedNumber = number.toLocaleString("es-ES", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
+  const formattedNumber = number.toLocaleString("es-CO");
 
-  return formattedNumber
-}
-
-export const unformatNumber = (value) => {
-  if (!value) {
-    return "0"
-  }
-
-  const number = parseFloat(value.replace(/[^0-9,-]/g, '').replace(',', '.'));
-  return number.toString();
+  // Añadir el símbolo de pesos colombianos al final si displayCurrency es true
+  return displayCurrency ? `${formattedNumber} COP` : formattedNumber;
 };
