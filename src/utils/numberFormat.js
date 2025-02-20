@@ -15,3 +15,12 @@ export const formatNumber = (value) => {
 
   return formattedNumber; // Sin "COP" para no afectar la edición en vivo
 };
+
+export const unformatNumber = (value) => {
+  if (!value) return ""
+  // Eliminar el símbolo de peso, los puntos y cualquier espacio
+  return value
+    .replace(/\s?COP/g, "")
+    .replace(/\./g, "")
+    .trim()
+}
