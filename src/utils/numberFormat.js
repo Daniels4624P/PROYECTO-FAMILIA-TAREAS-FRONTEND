@@ -1,18 +1,16 @@
-export const formatNumber = (value, displayCurrency = true) => {
+export const formatNumber = (value) => {
   if (!value) return ""
-
-  const number = parseFloat(value); // Convertir a número para manejar negativos
-
-  // Si es NaN o no es un número finito, retornar una cadena vacía
-  if (isNaN(number) || !Number.isFinite(number)) {
-    return "";
-  }
-
-  const formattedNumber = number.toLocaleString("es-CO");
-
-  // Añadir el símbolo de pesos colombianos al final si displayCurrency es true
-  return displayCurrency ? `${formattedNumber} COP` : formattedNumber;
-};
+  // Eliminar cualquier carácter que no sea dígito
+  const cleanValue = value.replace(/[^\d]/g, "")
+  // Si no hay dígitos, devolver una cadena vacía
+  if (cleanValue === "") return ""
+  // Convertir a número
+  const number = Number.parseInt(cleanValue, 10)
+  // Formatear con puntos como separadores de miles
+  const formattedNumber = number.toLocaleString("es-CO")
+  // Añadir el símbolo de pesos colombianos al final
+  return `${formattedNumber} COP`
+}
 
 export const unformatNumber = (value) => {
   if (!value) return ""
