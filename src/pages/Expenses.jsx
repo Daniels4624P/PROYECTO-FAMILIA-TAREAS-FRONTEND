@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { getExpenses, createExpense, updateExpense, deleteExpense, getCategories, getAccounts } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
-import { formatNumber, unformatNumber } from "../utils/numberFormat"
+import { formatNumber, unformatNumber, formatNumberWithCurrency } from "../utils/numberFormat"
 import { format, parseISO } from "date-fns"
 
 const Expenses = () => {
