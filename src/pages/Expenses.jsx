@@ -141,11 +141,10 @@ const Expenses = () => {
                   type="text"
                   {...field}
                   onChange={(e) => {
-                    const rawValue = e.target.value
-                    const formatted = formatNumber(rawValue)
-                    field.onChange(formatted)
+                    const rawValue = e.target.value;
+                    field.onChange(formatNumber(rawValue)); // Solo muestra los puntos, sin "COP"
                   }}
-                  value={formatNumber(field.value)}
+                  value={field.value}
                   className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
                 />
               )}
@@ -277,7 +276,7 @@ const Expenses = () => {
                       </p>
                     )}
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Amount: {formatNumber(expense.valor.toString())}
+                      Amount: {formatNumberWithCurrency(expense.valor.toString())}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Date: {expense.fecha.split("T")[0].split("-").reverse().join("/")} {/*Update 7*/}
