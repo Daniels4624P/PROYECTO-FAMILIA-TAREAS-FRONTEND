@@ -17,7 +17,7 @@ export const formatNumber = (value) => {
 // Agregar COP solo cuando se muestra en la lista de cuentas
 export const formatNumberWithCurrency = (value) => {
   if (!value) return "";
-  return `<numero: ${formatNumber(value)}> COP`;
+  return `${formatNumber(value)} COP`;
 };
 
 export const unformatNumber = (value) => {
