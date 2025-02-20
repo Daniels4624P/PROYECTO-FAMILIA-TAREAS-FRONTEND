@@ -59,7 +59,7 @@ const Accounts = () => {
     setEditingAccount(account)
     setValue("name", account.name)
     setValue("tipo", account.tipo)
-    setValue("saldo", account.saldo ? account.saldo.toString() : "")
+    setValue("saldo", account.saldo ? formatNumber(account.saldo.toString(), false) : "") // No mostrar COP en el input
     setValue("public", account.public ? "true" : "false")
   }
 
@@ -117,10 +117,10 @@ const Accounts = () => {
                   {...field}
                   onChange={(e) => {
                     const rawValue = e.target.value
-                    const formatted = formatNumber(rawValue)
+                    const formatted = formatNumber(rawValue, false) // No mostrar COP en el input
                     field.onChange(formatted)
                   }}
-                  value={formatNumber(field.value)}
+                  value={field.value} // Mostrar el valor tal cual está en el estado, ya formateado
                   className="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#2D2D2D] border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-notion-orange focus:border-transparent"
                 />
               )}
@@ -161,7 +161,6 @@ const Accounts = () => {
           </div>
         </form>
       </div>
-
       <div className="bg-white dark:bg-[#202020] p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Accounts List</h2>
         {isLoading ? (
@@ -180,7 +179,7 @@ const Accounts = () => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{account.name}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Type: {account.tipo}</p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Balance: {formatNumber(account.saldo.toString())}
+                      Balance: {formatNumber(account.saldo)}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Public: {account.public ? "Yes" : "No"}</p>
                     {account.createdAt && (
@@ -214,4 +213,3 @@ const Accounts = () => {
 }
 
 export default Accounts
-
