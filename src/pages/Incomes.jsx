@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { getIncomes, createIncome, updateIncome, deleteIncome, getAccounts, getCategories } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
-import { formatNumber, unformatNumber } from "../utils/numberFormat"
+import { formatNumber, unformatNumber, formatNumberWithCurrency } from "../utils/numberFormat"
 
 const Incomes = () => {
   const [incomes, setIncomes] = useState([])
