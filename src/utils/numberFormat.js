@@ -11,9 +11,13 @@ export const formatNumber = (value) => {
   const number = Number(cleanValue);
 
   // Formatear con puntos para separar miles
-  const formattedNumber = number.toLocaleString("es-CO");
+  return number.toLocaleString("es-CO");
+};
 
-  return formattedNumber; // Sin "COP" para no afectar la edición en vivo
+// Agregar COP solo cuando se muestra en la lista de cuentas
+export const formatNumberWithCurrency = (value) => {
+  if (!value) return "";
+  return `<numero: ${formatNumber(value)}> COP`;
 };
 
 export const unformatNumber = (value) => {
