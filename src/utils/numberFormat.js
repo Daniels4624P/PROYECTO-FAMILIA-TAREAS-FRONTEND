@@ -14,7 +14,7 @@ export const formatNumber = (value) => {
   const formattedNumber = number.toLocaleString("es-CO")
 
   // Añadir el símbolo de pesos colombianos al final
-  return `<numero: ${formattedNumber}> COP`
+  return `${formattedNumber} COP`
 }
 
 
