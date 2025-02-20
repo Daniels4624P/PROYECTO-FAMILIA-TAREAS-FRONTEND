@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { getAccounts, createAccount, updateAccount, deleteAccount } from "../utils/api"
 import { Pencil, Trash2 } from "lucide-react"
-import { formatNumber, unformatNumber } from "../utils/numberFormat"
+import { formatNumber, unformatNumber, formatNumberWithCurrency } from "../utils/numberFormat"
 
 const Accounts = () => {
   const [accounts, setAccounts] = useState([])
