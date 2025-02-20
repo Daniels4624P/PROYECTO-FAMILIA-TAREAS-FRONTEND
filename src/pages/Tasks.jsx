@@ -20,6 +20,7 @@ import {
 } from "../utils/api"
 import Loader from "../components/Loader"
 import { Pencil, Trash2 } from "lucide-react"
+import TaskCalendar from "../components/TaskCalendar"
 
 function Tasks() {
   const [tasks, setTasks] = useState([])
@@ -27,8 +28,10 @@ function Tasks() {
   const [selectedFolder, setSelectedFolder] = useState("")
   const [loadingTasks, setLoadingTasks] = useState(false)
   const [isPublic, setIsPublic] = useState(false)
-  const [publicFolders, setPublicFolders] = useState([])
   const [editingTask, setEditingTask] = useState(null)
+  const [viewMode, setViewMode] = useState("list") 
+  const [isPrivateFolder, setIsPrivateFolder] = useState(false)
+  const [publicFolders, setPublicFolders] = useState([])
 
   const {
     register,
@@ -76,8 +79,15 @@ function Tasks() {
   }
 
   const checkFolderPublicStatus = (folderId) => {
-    setIsPublic(publicFolders.includes(folderId))
+    const isPublic = publicFolders.includes(folderId)
+    setIsPublic(isPublic)
+    setIsPrivateFolder(!isPublic)
   }
+
+  const handleDateTimeChange = (e) => {
+    const datetime = e.target.value;
+    setValue("date", datetime);
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -86,6 +96,7 @@ function Tasks() {
         folderId: selectedFolder,
         public: isPublic,
         points: isPublic ? (data.points ? Number.parseInt(data.points, 10) : 0) : null,
+        date: !isPublic && data.date ? new Date(data.date).toISOString() : null,
       }
 
       const token = localStorage.getItem("token")
@@ -124,6 +135,13 @@ function Tasks() {
     setValue("task", task.task)
     setValue("description", task.description)
     setValue("points", task.points)
+    if (task.date) {
+      const dateObj = new Date(task.date)
+      const formattedDate = dateObj.toISOString().slice(0, 16) // Format: "YYYY-MM-DDTHH:mm"
+      setValue("date", formattedDate)
+    } else {
+      setValue("date", "")
+    }
   }
 
   const handleDeleteTask = async (id) => {
@@ -158,6 +176,27 @@ function Tasks() {
 
           {selectedFolder && (
             <>
+              {selectedFolder && isPrivateFolder && (
+                <div className="mt-4 flex justify-end space-x-2">
+                  <Button
+                    onClick={() => setViewMode("list")}
+                    className={`${
+                      viewMode === "list" ? "bg-notion-orange" : "bg-notion-gray"
+                    } hover:bg-notion-orange-dark text-white`}
+                  >
+                    List View
+                  </Button>
+                  <Button
+                    onClick={() => setViewMode("calendar")}
+                    className={`${
+                      viewMode === "calendar" ? "bg-notion-orange" : "bg-notion-gray"
+                    } hover:bg-notion-orange-dark text-white`}
+                  >
+                    Calendar View
+                  </Button>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-notion-text dark:text-notion-text-dark">
@@ -182,18 +221,34 @@ function Tasks() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="points" className="text-notion-text dark:text-notion-text-dark">
-                    Points
-                  </Label>
-                  <Input
-                    id="points"
-                    type="number"
-                    className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
-                    {...register("points", { min: 0 })}
-                    disabled={!isPublic}
-                  />
-                </div>
+                {!isPublic && (
+                  <div className="space-y-2">
+                    <Label htmlFor="date" className="text-notion-text dark:text-notion-text-dark">
+                      Date and Time
+                    </Label>
+                    <Input
+                      id="date"
+                      type="datetime-local"
+                      className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                      onChange={handleDateTimeChange}
+                      {...register("date")}
+                    />
+                  </div>
+                )}
+
+                {isPublic && (
+                  <div className="space-y-2">
+                    <Label htmlFor="points" className="text-notion-text dark:text-notion-text-dark">
+                      Points
+                    </Label>
+                    <Input
+                      id="points"
+                      type="number"
+                      className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                      {...register("points", { min: 0 })}
+                    />
+                  </div>
+                )}
 
                 <Button type="submit" className="bg-notion-orange hover:bg-notion-orange-dark text-white">
                   {editingTask ? "Update Task" : "Create Task"}
@@ -201,7 +256,10 @@ function Tasks() {
                 {editingTask && (
                   <Button
                     type="button"
-                    onClick={() => setEditingTask(null)}
+                    onClick={() => {
+                      setEditingTask(null)
+                      reset()
+                    }}
                     className="ml-2 bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
                   >
                     Cancel
@@ -213,6 +271,13 @@ function Tasks() {
                 <div className="mt-6">
                   <Loader size="large" />
                 </div>
+              ) : isPrivateFolder && viewMode === "calendar" ? (
+                <TaskCalendar
+                  tasks={tasks}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                  onCompleteTask={handleCompleteTask}
+                />
               ) : (
                 <div className="mt-6 space-y-4">
                   {tasks.length > 0 ? (
@@ -231,9 +296,16 @@ function Tasks() {
                               {task.description}
                             </p>
                           )}
-                          <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
-                            Points: {task.points}
-                          </p>
+                          {task.date && (
+                            <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                              Date: {new Date(task.date).toLocaleString()}
+                            </p>
+                          )}
+                          {isPublic && (
+                            <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                              Points: {task.points}
+                            </p>
+                          )}
                           <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
                             Status: {task.completed ? (isPublic ? "Completed" : "Completed (Private)") : "Pending"}
                           </p>
@@ -277,4 +349,3 @@ function Tasks() {
 }
 
 export default Tasks
-
