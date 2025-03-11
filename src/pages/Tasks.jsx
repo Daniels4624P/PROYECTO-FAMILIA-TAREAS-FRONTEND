@@ -1,203 +1,176 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  createTask,
-  getFolderTasks,
-  getPrivateFolders,
-  getPublicFolders,
-  updateTask,
-  deleteTask,
-  completePublicTask,
-  completePrivateTask,
-} from "../utils/api"
-import Loader from "../components/Loader"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Loader } from "@/components/ui/loader"
 import { Pencil, Trash2 } from "lucide-react"
-import TaskCalendar from "../components/TaskCalendar"
+import { useToast } from "@/components/ui/use-toast"
+import { TaskCalendar } from "@/components/TaskCalendar"
+import {
+  createTask as createTaskAction,
+  updateTask as updateTaskAction,
+  deleteTask as deleteTaskAction,
+  getTasks as getTasksAction,
+  completeTask as completeTasksAction,
+} from "@/actions"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-function Tasks() {
-  const [tasks, setTasks] = useState([])
-  const [folders, setFolders] = useState([])
-  const [selectedFolder, setSelectedFolder] = useState("")
-  const [loadingTasks, setLoadingTasks] = useState(false)
-  const [isPublic, setIsPublic] = useState(false)
-  const [editingTask, setEditingTask] = useState(null)
-  const [viewMode, setViewMode] = useState("list") 
-  const [isPrivateFolder, setIsPrivateFolder] = useState(false)
-  const [publicFolders, setPublicFolders] = useState([])
+interface Task {
+  id: string
+  task: string
+  description?: string
+  completed: boolean
+  date?: Date
+  points?: number
+}
 
+interface TasksProps {
+  selectedFolder: string | null
+  isPublic: boolean
+  isPrivateFolder: boolean
+}
+
+const Tasks: React.FC<TasksProps> = ({ selectedFolder, isPublic, isPrivateFolder }) => {
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
     formState: { errors },
-  } = useForm()
+    setValue,
+  } = useForm<{ task: string; description?: string; date?: Date; points?: number }
+>(
+{
+  task: "", description
+  : "",
+      date: undefined,
+      points: undefined,
+  ,
+}
+)
+const [tasks, setTasks] = useState<Task[]>([])
+const [loadingTasks, setLoadingTasks] = useState(false)
+const [editingTask, setEditingTask] = (useState < Task) | (null > null)
+const { toast } = useToast()
 
-  useEffect(() => {
-    fetchFolders()
-  }, [])
-
-  useEffect(() => {
-    if (selectedFolder) {
-      fetchTasks(selectedFolder)
-      checkFolderPublicStatus(selectedFolder)
-    } else {
-      setTasks([])
-    }
-  }, [selectedFolder])
-
-  const fetchFolders = async () => {
-    try {
-      const publicFoldersData = await getPublicFolders()
-      const privateFoldersData = await getPrivateFolders()
-      setPublicFolders(publicFoldersData.data.map((folder) => folder.id))
-      setFolders([...publicFoldersData.data, ...privateFoldersData.data])
-    } catch (error) {
-      console.error("Error fetching folders:", error)
-    }
+useEffect(() => {
+  if (selectedFolder) {
+    fetchTasks(selectedFolder)
   }
+}, [selectedFolder])
 
-  const fetchTasks = async (folderId) => {
+const fetchTasks = async (folderId: string) => {
     setLoadingTasks(true)
     try {
-      const response = await getFolderTasks(folderId)
-      setTasks(response.data.tasks.length ? response.data.tasks : [])
+      const fetchedTasks = await getTasksAction(folderId)
+      setTasks(fetchedTasks)
     } catch (error) {
-      console.error("Error fetching tasks:", error)
-      setTasks([])
+      toast({
+        title: "Error fetching tasks",
+        description: "Failed to retrieve tasks. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setLoadingTasks(false)
     }
   }
 
-  const checkFolderPublicStatus = (folderId) => {
-    const isPublic = publicFolders.includes(folderId)
-    setIsPublic(isPublic)
-    setIsPrivateFolder(!isPublic)
-  }
+const onSubmit = async (data: { task: string; description?: string; date?: Date; points?: number }) => {
+    if (!selectedFolder) return
 
-  const handleDateTimeChange = (e) => {
-    const datetime = e.target.value;
-    setValue("date", datetime);
-  };
-
-  const onSubmit = async (data) => {
     try {
-      const taskData = {
-        ...data,
-        folderId: selectedFolder,
-        public: isPublic,
-        points: isPublic ? (data.points ? Number.parseInt(data.points, 10) : 0) : null,
-        date: !isPublic && data.date ? new Date(data.date).toISOString() : null,
-      }
-
-      const token = localStorage.getItem("token")
       if (editingTask) {
-        await updateTask(editingTask.id, taskData, token)
-        setEditingTask(null)
+        // Update existing task
+        await updateTaskAction(editingTask.id, {
+          ...data,
+          folderId: selectedFolder,
+          completed: editingTask.completed,
+        })
+        toast({
+          title: "Task updated successfully!",
+        })
       } else {
-        await createTask(taskData, token)
+        // Create new task
+        await createTaskAction({ ...data, folderId: selectedFolder, completed: false })
+        toast({
+          title: "Task created successfully!",
+        })
       }
-      reset()
-      fetchTasks(selectedFolder)
+      fetchTasks(selectedFolder) // Refresh tasks
+      reset() // Clear form
+      setEditingTask(null) // Clear editing state
     } catch (error) {
-      console.error("Error creating/updating task:", error)
+      toast({
+        title: editingTask ? "Error updating task" : "Error creating task",
+        description: "Failed to save the task. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
-  const handleCompleteTask = async (id, folderId) => {
+const handleDeleteTask = async (taskId: string) => {
+    if (!selectedFolder) return
+
     try {
-      const token = localStorage.getItem("token")
-      const isTaskPublic = publicFolders.includes(folderId)
-
-      if (isTaskPublic) {
-        await completePublicTask(id, token)
-      } else {
-        await completePrivateTask(id, token)
-      }
-
-      setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, completed: true } : task)))
+      await deleteTaskAction(taskId)
+      setTasks(tasks.filter((task) => task.id !== taskId)) // Optimistically update the UI
+      toast({
+        title: "Task deleted successfully!",
+      })
     } catch (error) {
-      console.error("Error completing task:", error)
+      toast({
+        title: "Error deleting task",
+        description: "Failed to delete the task. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
-  const handleEditTask = (task) => {
+const handleEditTask = (task: Task) => {
     setEditingTask(task)
     setValue("task", task.task)
     setValue("description", task.description)
+    setValue("date", task.date)
     setValue("points", task.points)
-    if (task.date) {
-      const dateObj = new Date(task.date)
-      const formattedDate = dateObj.toISOString().slice(0, 16) // Format: "YYYY-MM-DDTHH:mm"
-      setValue("date", formattedDate)
-    } else {
-      setValue("date", "")
-    }
   }
 
-  const handleDeleteTask = async (id) => {
-    try {
-      const token = localStorage.getItem("token")
-      await deleteTask(id, token)
-      fetchTasks(selectedFolder)
-    } catch (error) {
-      console.error("Error deleting task:", error)
-    }
+const handleCompleteTask = async (taskId: string, folderId: string) => {
+  try {
+    await completeTasksAction(taskId)
+    fetchTasks(folderId)
+    toast({
+      title: "Task completed successfully!",
+    })
+  } catch (error) {
+    toast({
+      title: "Error completing task",
+      description: "Failed to complete the task. Please try again.",
+      variant: "destructive",
+    })
+  }
+}
+
+const handleDateTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue("date", new Date(e.target.value))
   }
 
-  return (
-    <div className="space-y-6">
-      <Card className="bg-notion-bg dark:bg-notion-dark">
-        <CardHeader>
-          <CardTitle className="text-notion-text dark:text-notion-text-dark">Tasks</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select onValueChange={setSelectedFolder} value={selectedFolder}>
-            <SelectTrigger className="w-full bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark">
-              <SelectValue placeholder="Select a folder" />
-            </SelectTrigger>
-            <SelectContent>
-              {folders.map((folder) => (
-                <SelectItem key={folder.id} value={folder.id}>
-                  {folder.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+return (
+    <>
+      {selectedFolder && (
+        <>
+          <Tabs defaultValue="create" className="mt-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="create">Create Task</TabsTrigger>
+              <TabsTrigger value="list">List View</TabsTrigger>
+              {isPrivateFolder && <TabsTrigger value="calendar">Calendar View</TabsTrigger>}
+            </TabsList>
 
-          {selectedFolder && (
-            <>
-              {selectedFolder && isPrivateFolder && (
-                <div className="mt-4 flex justify-end space-x-2">
-                  <Button
-                    onClick={() => setViewMode("list")}
-                    className={`${
-                      viewMode === "list" ? "bg-notion-orange" : "bg-notion-gray"
-                    } hover:bg-notion-orange-dark text-white`}
-                  >
-                    List View
-                  </Button>
-                  <Button
-                    onClick={() => setViewMode("calendar")}
-                    className={`${
-                      viewMode === "calendar" ? "bg-notion-orange" : "bg-notion-gray"
-                    } hover:bg-notion-orange-dark text-white`}
-                  >
-                    Calendar View
-                  </Button>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+            <TabsContent value="create" className="mt-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-notion-text dark:text-notion-text-dark">
                     Task Name
@@ -266,20 +239,15 @@ function Tasks() {
                   </Button>
                 )}
               </form>
+            </TabsContent>
 
+            <TabsContent value="list" className="mt-4">
               {loadingTasks ? (
                 <div className="mt-6">
                   <Loader size="large" />
                 </div>
-              ) : isPrivateFolder && viewMode === "calendar" ? (
-                <TaskCalendar
-                  tasks={tasks}
-                  onEditTask={handleEditTask}
-                  onDeleteTask={handleDeleteTask}
-                  onCompleteTask={handleCompleteTask}
-                />
               ) : (
-                <div className="mt-6 space-y-4">
+                <div className="space-y-4">
                   {tasks.length > 0 ? (
                     tasks.map((task) => (
                       <Card key={task.id} className="bg-notion-bg dark:bg-notion-dark">
@@ -340,12 +308,24 @@ function Tasks() {
                   )}
                 </div>
               )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            </TabsContent>
+
+            {isPrivateFolder && (
+              <TabsContent value="calendar" className="mt-4">
+                <TaskCalendar
+                  tasks={tasks}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                  onCompleteTask={handleCompleteTask}
+                />
+              </TabsContent>
+            )}
+          </Tabs>
+        </>
+      )}
+    </>
   )
 }
 
 export default Tasks
+
