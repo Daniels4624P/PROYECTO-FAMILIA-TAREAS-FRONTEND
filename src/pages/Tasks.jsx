@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader } from "@/components/ui/loader"
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { TaskCalendar } from "@/components/TaskCalendar"
 import {
@@ -210,4 +210,121 @@ return (
                 )}
 
                 {isPublic && (
+                  <div className="space-y-2">
+                    <Label htmlFor="points" className="text-notion-text dark:text-notion-text-dark">
+                      Points
+                    </Label>
+                    <Input
+                      id="points"
+                      type="number"
+                      className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                      {...register("points", { min: 0 })}
+                    />
+                  </div>
+                )}
 
+                <Button type="submit" className="bg-notion-orange hover:bg-notion-orange-dark text-white">
+                  {editingTask ? "Update Task" : "Create Task"}
+                </Button>
+                {editingTask && (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setEditingTask(null)
+                      reset()
+                    }}
+                    className="ml-2 bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </form>
+            </TabsContent>
+
+            <TabsContent value="list" className="mt-4">
+              {loadingTasks ? (
+                <div className="mt-6">
+                  <Loader size="large" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {tasks.length > 0 ? (
+                    tasks.map((task) => (
+                      <Card key={task.id} className="bg-notion-bg dark:bg-notion-dark">
+                        <CardContent className="pt-6">
+                          <h3
+                            className={`text-lg font-semibold ${
+                              task.completed ? "line-through text-notion-text-light" : "text-notion-text"
+                            } dark:text-notion-text-dark`}
+                          >
+                            {task.task}
+                          </h3>
+                          {task.description && (
+                            <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                              {task.description}
+                            </p>
+                          )}
+                          {task.date && (
+                            <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                              Date: {new Date(task.date).toLocaleString()}
+                            </p>
+                          )}
+                          {isPublic && (
+                            <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                              Points: {task.points}
+                            </p>
+                          )}
+                          <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
+                            Status: {task.completed ? (isPublic ? "Completed" : "Completed (Private)") : "Pending"}
+                          </p>
+                          <div className="mt-4 space-x-2">
+                            <Button
+                              onClick={() => handleCompleteTask(task.id, selectedFolder)}
+                              className="bg-notion-orange hover:bg-notion-orange-dark text-white"
+                              disabled={task.completed}
+                            >
+                              {task.completed ? "Task Completed" : "Complete Task"}
+                            </Button>
+                            <Button
+                              onClick={() => handleEditTask(task)}
+                              className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
+                            >
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteTask(task.id)}
+                              className="bg-red-500 hover:bg-red-600 text-white"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <p className="text-center text-notion-text-light dark:text-notion-text-dark">No tasks available</p>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+
+            {isPrivateFolder && (
+              <TabsContent value="calendar" className="mt-4">
+                <TaskCalendar
+                  tasks={tasks}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                  onCompleteTask={handleCompleteTask}
+                />
+              </TabsContent>
+            )}
+          </Tabs>
+        </>
+      )}
+    </>
+  )
+}
+
+export default Tasks
