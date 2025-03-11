@@ -33,6 +33,7 @@ function Tasks() {
   const [isPrivateFolder, setIsPrivateFolder] = useState(false)
   const [publicFolders, setPublicFolders] = useState([])
   const [showForm, setShowForm] = useState(true)
+  const [inlineEditingTaskId, setInlineEditingTaskId] = useState(null)
 
   const {
     register,
@@ -111,6 +112,7 @@ function Tasks() {
       fetchTasks(selectedFolder)
       // Show the task list after creating/updating a task
       setShowForm(false)
+      setInlineEditingTaskId(null)
     } catch (error) {
       console.error("Error creating/updating task:", error)
     }
@@ -134,19 +136,23 @@ function Tasks() {
   }
 
   const handleEditTask = (task) => {
-    setEditingTask(task)
-    setValue("task", task.task)
-    setValue("description", task.description)
-    setValue("points", task.points)
-    if (task.date) {
-      const dateObj = new Date(task.date)
-      const formattedDate = dateObj.toISOString().slice(0, 16) // Format: "YYYY-MM-DDTHH:mm"
-      setValue("date", formattedDate)
+    if (showForm) {
+      // Use the main form if it's already visible
+      setEditingTask(task)
+      setValue("task", task.task)
+      setValue("description", task.description)
+      setValue("points", task.points)
+      if (task.date) {
+        const dateObj = new Date(task.date)
+        const formattedDate = dateObj.toISOString().slice(0, 16) // Format: "YYYY-MM-DDTHH:mm"
+        setValue("date", formattedDate)
+      } else {
+        setValue("date", "")
+      }
     } else {
-      setValue("date", "")
+      // Use inline editing
+      setInlineEditingTaskId(task.id)
     }
-    // Show the form when editing
-    setShowForm(true)
   }
 
   const handleDeleteTask = async (id) => {
@@ -317,54 +323,155 @@ function Tasks() {
                         tasks.map((task) => (
                           <Card key={task.id} className="bg-notion-bg dark:bg-notion-dark">
                             <CardContent className="pt-6">
-                              <h3
-                                className={`text-lg font-semibold ${
-                                  task.completed ? "line-through text-notion-text-light" : "text-notion-text"
-                                } dark:text-notion-text-dark`}
-                              >
-                                {task.task}
-                              </h3>
-                              {task.description && (
-                                <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
-                                  {task.description}
-                                </p>
-                              )}
-                              {task.date && (
-                                <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
-                                  Date: {new Date(task.date).toLocaleString()}
-                                </p>
-                              )}
-                              {isPublic && (
-                                <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
-                                  Points: {task.points}
-                                </p>
-                              )}
-                              <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
-                                Status: {task.completed ? (isPublic ? "Completed" : "Completed (Private)") : "Pending"}
-                              </p>
-                              <div className="mt-4 space-x-2">
-                                <Button
-                                  onClick={() => handleCompleteTask(task.id, selectedFolder)}
-                                  className="bg-notion-orange hover:bg-notion-orange-dark text-white"
-                                  disabled={task.completed}
+                              {inlineEditingTaskId === task.id ? (
+                                // Inline edit form
+                                <form
+                                  onSubmit={handleSubmit((data) => {
+                                    onSubmit(data)
+                                    setInlineEditingTaskId(null)
+                                  })}
+                                  className="space-y-4"
                                 >
-                                  {task.completed ? "Task Completed" : "Complete Task"}
-                                </Button>
-                                <Button
-                                  onClick={() => handleEditTask(task)}
-                                  className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
-                                >
-                                  <Pencil className="w-4 h-4 mr-2" />
-                                  Edit
-                                </Button>
-                                <Button
-                                  onClick={() => handleDeleteTask(task.id)}
-                                  className="bg-red-500 hover:bg-red-600 text-white"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </Button>
-                              </div>
+                                  <div className="space-y-2">
+                                    <Label
+                                      htmlFor={`name-${task.id}`}
+                                      className="text-notion-text dark:text-notion-text-dark"
+                                    >
+                                      Task Name
+                                    </Label>
+                                    <Input
+                                      id={`name-${task.id}`}
+                                      className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                      defaultValue={task.task}
+                                      {...register("task", { required: "Task name is required" })}
+                                    />
+                                    {errors.task && <p className="text-sm text-red-500">{errors.task.message}</p>}
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <Label
+                                      htmlFor={`description-${task.id}`}
+                                      className="text-notion-text dark:text-notion-text-dark"
+                                    >
+                                      Description
+                                    </Label>
+                                    <Textarea
+                                      id={`description-${task.id}`}
+                                      className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                      defaultValue={task.description}
+                                      {...register("description")}
+                                    />
+                                  </div>
+
+                                  {!isPublic && (
+                                    <div className="space-y-2">
+                                      <Label
+                                        htmlFor={`date-${task.id}`}
+                                        className="text-notion-text dark:text-notion-text-dark"
+                                      >
+                                        Date and Time
+                                      </Label>
+                                      <Input
+                                        id={`date-${task.id}`}
+                                        type="datetime-local"
+                                        className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                        defaultValue={task.date ? new Date(task.date).toISOString().slice(0, 16) : ""}
+                                        onChange={handleDateTimeChange}
+                                        {...register("date")}
+                                      />
+                                    </div>
+                                  )}
+
+                                  {isPublic && (
+                                    <div className="space-y-2">
+                                      <Label
+                                        htmlFor={`points-${task.id}`}
+                                        className="text-notion-text dark:text-notion-text-dark"
+                                      >
+                                        Points
+                                      </Label>
+                                      <Input
+                                        id={`points-${task.id}`}
+                                        type="number"
+                                        className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                        defaultValue={task.points}
+                                        {...register("points", { min: 0 })}
+                                      />
+                                    </div>
+                                  )}
+
+                                  <div className="flex justify-between">
+                                    <Button
+                                      type="submit"
+                                      className="bg-notion-orange hover:bg-notion-orange-dark text-white"
+                                    >
+                                      Update Task
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      onClick={() => {
+                                        setInlineEditingTaskId(null)
+                                      }}
+                                      className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </form>
+                              ) : (
+                                // Normal task view
+                                <>
+                                  <h3
+                                    className={`text-lg font-semibold ${
+                                      task.completed ? "line-through text-notion-text-light" : "text-notion-text"
+                                    } dark:text-notion-text-dark`}
+                                  >
+                                    {task.task}
+                                  </h3>
+                                  {task.description && (
+                                    <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                                      {task.description}
+                                    </p>
+                                  )}
+                                  {task.date && (
+                                    <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                                      Date: {new Date(task.date).toLocaleString()}
+                                    </p>
+                                  )}
+                                  {isPublic && (
+                                    <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                                      Points: {task.points}
+                                    </p>
+                                  )}
+                                  <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
+                                    Status:{" "}
+                                    {task.completed ? (isPublic ? "Completed" : "Completed (Private)") : "Pending"}
+                                  </p>
+                                  <div className="mt-4 space-x-2">
+                                    <Button
+                                      onClick={() => handleCompleteTask(task.id, selectedFolder)}
+                                      className="bg-notion-orange hover:bg-notion-orange-dark text-white"
+                                      disabled={task.completed}
+                                    >
+                                      {task.completed ? "Task Completed" : "Complete Task"}
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleEditTask(task)}
+                                      className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
+                                    >
+                                      <Pencil className="w-4 h-4 mr-2" />
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleDeleteTask(task.id)}
+                                      className="bg-red-500 hover:bg-red-600 text-white"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
                             </CardContent>
                           </Card>
                         ))
