@@ -175,9 +175,6 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
           <p>
             <strong>Status:</strong> {task.completed ? "Completed" : "Pending"}
           </p>
-          <p>
-            <strong>Created:</strong> {moment(task.createdAt).format("LLL")}
-          </p>
         </DialogDescription>
         <div className="flex justify-end space-x-2 mt-4">
           <Button onClick={() => onEdit(task)} className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text">
