@@ -25,12 +25,14 @@ const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
   const eventStyleGetter = (event) => {
     const style = {
       backgroundColor: event.color,
-      borderRadius: "4px",
-      opacity: 0.8,
+      borderRadius: "8px",
+      opacity: 0.9,
       color: "white",
       border: "0",
       display: "block",
-      fontWeight: "500",
+      fontWeight: "600",
+      padding: "4px",
+      fontSize: "14px",
     }
     return {
       style: style,
@@ -46,7 +48,7 @@ const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
   }
 
   return (
-    <div className="h-[600px] p-2 sm:p-4 bg-notion-bg dark:bg-notion-dark">
+    <div className="h-[700px] p-4 bg-notion-bg dark:bg-notion-dark rounded-lg shadow-lg">
       <Calendar
         localizer={localizer}
         events={taskEvents}
@@ -79,8 +81,8 @@ const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
 }
 
 const EventComponent = ({ event }) => (
-  <div className="p-1">
-    <div className="font-medium text-sm">{event.title}</div>
+  <div className="p-2">
+    <div className="font-bold text-sm">{event.title}</div>
   </div>
 )
 
@@ -99,13 +101,13 @@ const CustomToolbar = ({ onNavigate, date, view, onView }) => {
 
   const label = () => {
     const dateObj = moment(date)
-    return <span className="text-lg sm:text-xl font-medium">{dateObj.format("MMMM YYYY")}</span>
+    return <span className="text-lg sm:text-xl font-semibold">{dateObj.format("MMMM YYYY")}</span>
   }
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
       <div className="flex items-center space-x-2">
-        <button onClick={goToBack} className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
+        <button onClick={goToBack} className="p-2 rounded-full hover:bg-gray-200 transition-colors duration-200">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -116,7 +118,7 @@ const CustomToolbar = ({ onNavigate, date, view, onView }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <button onClick={goToNext} className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
+        <button onClick={goToNext} className="p-2 rounded-full hover:bg-gray-200 transition-colors duration-200">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -130,12 +132,12 @@ const CustomToolbar = ({ onNavigate, date, view, onView }) => {
         {label()}
         <button
           onClick={goToCurrent}
-          className="ml-2 px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors duration-200"
+          className="ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200"
         >
           Hoy
         </button>
       </div>
-      <div className="flex space-x-1 sm:space-x-2 w-full sm:w-auto">
+      <div className="flex space-x-2 w-full sm:w-auto">
         {[
           { label: "Mes", value: Views.MONTH },
           { label: "Semana", value: Views.WEEK },
@@ -144,8 +146,8 @@ const CustomToolbar = ({ onNavigate, date, view, onView }) => {
           <button
             key={value}
             onClick={() => onView(value)}
-            className={`flex-1 sm:flex-none px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
-              view === value ? "bg-blue-100 text-blue-700" : "text-gray-700 hover:bg-gray-100"
+            className={`flex-1 sm:flex-none px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${
+              view === value ? "bg-blue-100 text-blue-700" : "text-gray-700 hover:bg-gray-200"
             }`}
           >
             {label}
@@ -161,7 +163,7 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
 
   return (
     <Dialog open={!!task} onOpenChange={onClose}>
-      <DialogContent className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark">
+      <DialogContent className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark rounded-lg shadow-lg">
         <DialogHeader>
           <DialogTitle>{task.task}</DialogTitle>
         </DialogHeader>
@@ -176,7 +178,7 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
             <strong>Status:</strong> {task.completed ? "Completed" : "Pending"}
           </p>
         </DialogDescription>
-        <div className="flex justify-end space-x-2 mt-4">
+        <div className="flex justify-end space-x-4 mt-4">
           <Button onClick={() => onEdit(task)} className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text">
             <Pencil className="w-4 h-4 mr-2" />
             Edit
@@ -200,4 +202,3 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
 }
 
 export default TaskCalendar
-
