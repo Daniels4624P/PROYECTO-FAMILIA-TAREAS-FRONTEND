@@ -1,39 +1,115 @@
 "use client"
 
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useEffect } from "react"
+import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
-import { FiMenu, FiX } from "react-icons/fi"
+import ThemeToggle from "./ThemeToggle"
+import {
+  Menu,
+  X,
+  Home,
+  User,
+  Wallet,
+  PieChart,
+  FolderOpen,
+  FileText,
+  BarChart2,
+  Users,
+  LogOut,
+  LogIn,
+  UserPlus,
+  KeyRound,
+  CreditCard,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Tags,
+  FileOutput,
+} from "lucide-react"
 
-function Sidebar() {
-  const { user } = useAuth()
-  const [isOpen, setIsOpen] = useState(false)
+function Sidebar({ isOpen, setIsOpen }) {
+  const { user, logout } = useAuth()
+  const location = useLocation()
 
-  const closeSidebar = () => setIsOpen(false)
+  // Cerrar el sidebar en dispositivos móviles cuando cambia la ruta
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setIsOpen(false)
+    }
+  }, [location.pathname, setIsOpen])
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen)
+  }
+
+  const handleLogout = () => {
+    logout()
+    setIsOpen(false)
+  }
 
   return (
     <>
-      <button className="md:hidden p-4 focus:outline-none" onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-      </button>
-      <div
-        className={`bg-notion-gray dark:bg-notion-dark w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+      {/* Botón de toggle para el sidebar (visible en todas las pantallas) */}
+      <button
+        className="fixed top-4 left-4 z-50 p-2 rounded-md bg-notion-gray dark:bg-notion-dark text-notion-text dark:text-notion-text-dark hover:bg-notion-gray-dark dark:hover:bg-gray-700 focus:outline-none"
+        onClick={toggleSidebar}
+        aria-label="Toggle sidebar"
       >
-        <nav>
+        {isOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay para cerrar el sidebar cuando está abierto */}
+      {isOpen && window.innerWidth < 768 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => setIsOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`bg-notion-gray dark:bg-notion-dark w-64 h-screen space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform transition-transform duration-200 ease-in-out z-40 overflow-y-auto ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Espacio para el botón de toggle */}
+        <div className="h-10"></div>
+
+        {/* Título y toggle de tema */}
+        <div className="flex items-center justify-between px-4 pt-2 pb-4 border-b border-notion-gray-dark dark:border-gray-700">
+          <h1 className="text-xl font-bold text-notion-text dark:text-notion-text-dark">TASK AND EXPENSES</h1>
+          <ThemeToggle />
+        </div>
+
+        {/* Información del usuario en el sidebar */}
+        {user && (
+          <div className="px-4 py-2 mb-4 border-b border-notion-gray-dark dark:border-gray-700">
+            <p className="text-sm font-medium text-notion-text dark:text-notion-text-dark">Logged in as:</p>
+            <p className="text-notion-text-light dark:text-notion-text-dark truncate">{user.name}</p>
+            <button
+              onClick={handleLogout}
+              className="mt-2 flex items-center text-sm text-notion-text-light dark:text-notion-text-dark hover:text-notion-orange dark:hover:text-notion-orange-dark"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </button>
+          </div>
+        )}
+
+        <nav className="space-y-1">
           <Link
             to="/"
-            onClick={closeSidebar}
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+            onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+            className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
           >
+            <Home className="h-5 w-5 mr-3" />
             Home
           </Link>
+
           {user ? (
             <>
               <Link
                 to="/profile"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <User className="h-5 w-5 mr-3" />
                 Profile
               </Link>
 
@@ -43,37 +119,42 @@ function Sidebar() {
               </div>
               <Link
                 to="/accounts"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <CreditCard className="h-5 w-5 mr-3" />
                 Accounts
               </Link>
               <Link
                 to="/expenses"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <ArrowDownCircle className="h-5 w-5 mr-3" />
                 Expenses
               </Link>
               <Link
                 to="/incomes"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <ArrowUpCircle className="h-5 w-5 mr-3" />
                 Incomes
               </Link>
               <Link
                 to="/categories"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <Tags className="h-5 w-5 mr-3" />
                 Categories
               </Link>
               <Link
                 to="/finances"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <FileOutput className="h-5 w-5 mr-3" />
                 Export Finances
               </Link>
 
@@ -83,30 +164,34 @@ function Sidebar() {
               </div>
               <Link
                 to="/projects"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <Wallet className="h-5 w-5 mr-3" />
                 Projects
               </Link>
               <Link
                 to="/folders"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <FolderOpen className="h-5 w-5 mr-3" />
                 Folders
               </Link>
               <Link
                 to="/tasks"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <FileText className="h-5 w-5 mr-3" />
                 Tasks
               </Link>
               <Link
                 to="/tasks/monthly"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <BarChart2 className="h-5 w-5 mr-3" />
                 Monthly Graphic
               </Link>
 
@@ -116,17 +201,19 @@ function Sidebar() {
               </div>
               <Link
                 to="/users/points"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <PieChart className="h-5 w-5 mr-3" />
                 User Points
               </Link>
               {user.isAdmin && (
                 <Link
                   to="/users"
-                  onClick={closeSidebar}
-                  className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                  onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                  className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
                 >
+                  <Users className="h-5 w-5 mr-3" />
                   Users
                 </Link>
               )}
@@ -135,29 +222,32 @@ function Sidebar() {
             <>
               <Link
                 to="/login"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <LogIn className="h-5 w-5 mr-3" />
                 Login
               </Link>
               <Link
                 to="/register"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <UserPlus className="h-5 w-5 mr-3" />
                 Register
               </Link>
               <Link
                 to="/password-recovery"
-                onClick={closeSidebar}
-                className="block py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
+                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
+                <KeyRound className="h-5 w-5 mr-3" />
                 Forgot Password
               </Link>
             </>
           )}
         </nav>
-      </div>
+      </aside>
     </>
   )
 }
