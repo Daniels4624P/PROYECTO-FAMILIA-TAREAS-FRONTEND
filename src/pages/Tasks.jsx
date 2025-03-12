@@ -36,6 +36,7 @@ function Tasks() {
   const [inlineEditingTaskId, setInlineEditingTaskId] = useState(null)
   const [numberRepeat, setNumberRepeat] = useState(null)
   const [completingTaskId, setCompletingTaskId] = useState(null)
+  const [numberRepeatError, setNumberRepeatError] = useState("")
 
   const {
     register,
@@ -125,61 +126,72 @@ function Tasks() {
 
   // Función para iniciar el proceso de completar una tarea
   const initiateCompleteTask = (taskId) => {
-    // Si la tarea requiere numberRepeat, mostrar el formulario
+    // Si la tarea requiere numberRepeat, mostrar el modal
     if ([2, 7, 11, 25].includes(taskId)) {
       setCompletingTaskId(taskId)
       setNumberRepeat(null) // Resetear el valor para nueva entrada
+      setNumberRepeatError("") // Limpiar errores previos
     } else {
       // Si no requiere numberRepeat, completar directamente
       handleCompleteTask(taskId, selectedFolder)
     }
   }
 
-  // Función para confirmar y enviar la tarea como completada
+  // Función para validar y confirmar la tarea como completada
   const confirmCompleteTask = async () => {
     if (completingTaskId === null) return
 
+    // Validar que numberRepeat tenga un valor
+    if (numberRepeat === null || numberRepeat === undefined || numberRepeat === "") {
+      setNumberRepeatError("Este campo es obligatorio")
+      return
+    }
+
+    // Validar el rango según el ID de la tarea
+    let maxValue = 5
+    let isValid = true
+
+    switch (completingTaskId) {
+      case 2:
+        maxValue = 2
+        if (numberRepeat < 0 || numberRepeat > maxValue) isValid = false
+        break
+      case 7:
+        maxValue = 5
+        if (numberRepeat < 0 || numberRepeat > maxValue) isValid = false
+        break
+      case 11:
+        maxValue = 3
+        if (numberRepeat < 0 || numberRepeat > maxValue) isValid = false
+        break
+      case 25:
+        maxValue = 5
+        if (numberRepeat < 0 || numberRepeat > maxValue) isValid = false
+        break
+    }
+
+    if (!isValid) {
+      setNumberRepeatError(`El valor debe estar entre 0 y ${maxValue}`)
+      return
+    }
+
     try {
-      let isValid = true
-      let maxValue = 5
-
-      switch (completingTaskId) {
-        case 2:
-          maxValue = 2
-          if (numberRepeat < 0 || numberRepeat > maxValue) isValid = false
-          break
-        case 7:
-          maxValue = 5
-          if (numberRepeat < 0 || numberRepeat > maxValue) isValid = false
-          break
-        case 11:
-          maxValue = 3
-          if (numberRepeat < 0 || numberRepeat > maxValue) isValid = false
-          break
-        case 25:
-          maxValue = 5
-          if (numberRepeat < 0 || numberRepeat > maxValue) isValid = false
-          break
-      }
-
-      if (!isValid) {
-        showAlert(`El valor de numberRepeat debe estar entre 0 y ${maxValue}`, "error")
-        return
-      }
-
       const token = localStorage.getItem("token")
       const isTaskPublic = publicFolders.includes(selectedFolder)
 
       // Crear el objeto con los datos a enviar
+      // Siempre incluir numberRepeat en el body para las tareas específicas
       const taskData = {
         numberRepeat: numberRepeat,
       }
+
+      console.log("Enviando datos:", taskData) // Para depuración
 
       // Llamar a la API correspondiente
       if (isTaskPublic) {
         await completePublicTask(completingTaskId, token, taskData)
       } else {
-        await completePrivateTask(completingTaskId, token)
+        await completePrivateTask(completingTaskId, token, taskData)
       }
 
       // Actualizar el estado local
@@ -190,6 +202,7 @@ function Tasks() {
       // Limpiar el estado
       setCompletingTaskId(null)
       setNumberRepeat(null)
+      setNumberRepeatError("")
 
       showAlert("Tarea completada con éxito", "success")
     } catch (error) {
@@ -198,16 +211,19 @@ function Tasks() {
     }
   }
 
-  // Función original para completar tareas (para las que no requieren numberRepeat)
+  // Función para completar tareas que no requieren numberRepeat
   const handleCompleteTask = async (id, folderId) => {
     try {
       const token = localStorage.getItem("token")
       const isTaskPublic = publicFolders.includes(folderId)
 
+      // Para tareas que no requieren numberRepeat, enviar un objeto vacío
+      const taskData = {}
+
       if (isTaskPublic) {
-        await completePublicTask(id, token, {})
+        await completePublicTask(id, token, taskData)
       } else {
-        await completePrivateTask(id, token, {})
+        await completePrivateTask(id, token, taskData)
       }
 
       setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, completed: true } : task)))
@@ -271,6 +287,17 @@ function Tasks() {
       alertElement.classList.add("opacity-0", "transition-opacity", "duration-500")
       setTimeout(() => document.body.removeChild(alertElement), 500)
     }, 3000)
+  }
+
+  // Manejar cambios en el campo numberRepeat del modal
+  const handleNumberRepeatChange = (e) => {
+    const value = e.target.value
+    setNumberRepeat(value === "" ? null : Number(value))
+
+    // Limpiar el error si el usuario está escribiendo
+    if (value !== "") {
+      setNumberRepeatError("")
+    }
   }
 
   return (
@@ -431,7 +458,15 @@ function Tasks() {
                       <h3 className="text-lg font-semibold text-notion-text dark:text-notion-text-dark">
                         Completar Tarea
                       </h3>
-                      <Button variant="ghost" size="icon" onClick={() => setCompletingTaskId(null)} className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setCompletingTaskId(null)
+                          setNumberRepeatError("")
+                        }}
+                        className="h-8 w-8"
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -444,15 +479,18 @@ function Tasks() {
                         <Input
                           id="numberRepeatComplete"
                           type="number"
-                          className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
-                          value={numberRepeat || ""}
-                          onChange={(e) => setNumberRepeat(Number(e.target.value))}
+                          className={`bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark ${
+                            numberRepeatError ? "border-red-500 focus:ring-red-500" : ""
+                          }`}
+                          value={numberRepeat === null ? "" : numberRepeat}
+                          onChange={handleNumberRepeatChange}
                           min="0"
                           max={
                             completingTaskId === 2 ? 2 : completingTaskId === 7 ? 5 : completingTaskId === 11 ? 3 : 5
                           }
                           required
                         />
+                        {numberRepeatError && <p className="text-sm text-red-500">{numberRepeatError}</p>}
                         <p className="text-xs text-amber-600">
                           {completingTaskId === 2
                             ? "Máximo 2 repeticiones"
@@ -467,7 +505,10 @@ function Tasks() {
                       <div className="flex justify-end space-x-2">
                         <Button
                           type="button"
-                          onClick={() => setCompletingTaskId(null)}
+                          onClick={() => {
+                            setCompletingTaskId(null)
+                            setNumberRepeatError("")
+                          }}
                           className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
                         >
                           Cancelar
