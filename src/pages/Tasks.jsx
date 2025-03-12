@@ -99,24 +99,34 @@ function Tasks() {
         public: isPublic,
         points: isPublic ? (data.points ? Number.parseInt(data.points, 10) : 0) : null,
         date: !isPublic && data.date ? new Date(data.date).toISOString() : null,
+        numberRepeat: data.numberRepeat ? Number.parseInt(data.numberRepeat, 10) : null,  // Añadimos numberRepeat
+      };
+
+      // Validación de numberRepeat para los IDs específicos
+      if ([3, 7, 11, 25].includes(editingTask?.id)) {
+          const maxValues = { 3: 2, 7: 5, 11: 3, 25: 5 };
+          if (taskData.numberRepeat > maxValues[editingTask.id]) {
+            console.error(`El valor máximo de numberRepeat para el ID ${editingTask.id} es ${maxValues[editingTask.id]}`);
+            return;
+          }
       }
 
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       if (editingTask) {
-        await updateTask(editingTask.id, taskData, token)
-        setEditingTask(null)
+        await updateTask(editingTask.id, taskData, token);
+        setEditingTask(null);
       } else {
-        await createTask(taskData, token)
+        await createTask(taskData, token);
       }
-      reset()
-      fetchTasks(selectedFolder)
-      // Show the task list after creating/updating a task
-      setShowForm(false)
-      setInlineEditingTaskId(null)
+      reset();
+      fetchTasks(selectedFolder);
+      // Mostrar la lista de tareas después de crear/actualizar una tarea
+      setShowForm(false);
+      setInlineEditingTaskId(null);
     } catch (error) {
-      console.error("Error creating/updating task:", error)
+      console.error("Error creating/updating task:", error);
     }
-  }
+  };
 
   const handleCompleteTask = async (id, folderId) => {
     try {
@@ -142,6 +152,7 @@ function Tasks() {
       setValue("task", task.task)
       setValue("description", task.description)
       setValue("points", task.points)
+      setValue("numberRepeat", task.numberRepeat)  // Añadir este valor al formulario
       if (task.date) {
         const dateObj = new Date(task.date)
         const formattedDate = dateObj.toISOString().slice(0, 16) // Format: "YYYY-MM-DDTHH:mm"
@@ -280,6 +291,18 @@ function Tasks() {
                         />
                       </div>
                     )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="numberRepeat" className="text-notion-text dark:text-notion-text-dark">
+                        Number Repeat
+                      </Label>
+                      <Input
+                        id="numberRepeat"
+                        type="number"
+                        className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                        {...register("numberRepeat", { min: 0 })}
+                      />
+                    </div>
 
                     <div className="flex justify-between">
                       <Button type="submit" className="bg-notion-orange hover:bg-notion-orange-dark text-white">
@@ -400,6 +423,22 @@ function Tasks() {
                                     </div>
                                   )}
 
+                                  <div className="space-y-2">
+                                    <Label
+                                      htmlFor={`numberRepeat-${task.id}`}
+                                      className="text-notion-text dark:text-notion-text-dark"
+                                    >
+                                      Number Repeat
+                                    </Label>
+                                    <Input
+                                      id={`numberRepeat-${task.id}`}
+                                      type="number"
+                                      className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                      defaultValue={task.numberRepeat}
+                                      {...register("numberRepeat", { min: 0 })}
+                                    />
+                                  </div>
+
                                   <div className="flex justify-between">
                                     <Button
                                       type="submit"
@@ -493,4 +532,3 @@ function Tasks() {
 }
 
 export default Tasks
-
