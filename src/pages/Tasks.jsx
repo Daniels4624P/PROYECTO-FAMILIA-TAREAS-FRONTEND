@@ -34,6 +34,7 @@ function Tasks() {
   const [publicFolders, setPublicFolders] = useState([])
   const [showForm, setShowForm] = useState(true)
   const [inlineEditingTaskId, setInlineEditingTaskId] = useState(null)
+  const [numberRepeat, setNumberRepeat] = useState(null)
 
   const {
     register,
@@ -120,11 +121,39 @@ function Tasks() {
 
   const handleCompleteTask = async (id, folderId) => {
     try {
+      let isValid = true
+
+      switch (id) {
+        case 3:
+          if (numberRepeat < 0 || numberRepeat > 2) isValid = false
+          break
+        case 7:
+          if (numberRepeat < 0 || numberRepeat > 5) isValid = false
+          break
+        case 11:
+          if (numberRepeat < 0 || numberRepeat > 3) isValid = false
+          break
+        case 25:
+          if (numberRepeat < 0 || numberRepeat > 5) isValid = false
+          break
+        default:
+          isValid = true
+      }
+
+      if (!isValid) {
+        alert('El valor de numberRepeat no es válido.')
+        return
+      }
+
       const token = localStorage.getItem("token")
       const isTaskPublic = publicFolders.includes(folderId)
 
+      const taskData = {
+        numberRepeat: (id === 3 || id === 7 || id === 11 || id === 25) ? numberRepeat : undefined,
+      }
+
       if (isTaskPublic) {
-        await completePublicTask(id, token)
+        await completePublicTask(id, token, taskData)
       } else {
         await completePrivateTask(id, token)
       }
