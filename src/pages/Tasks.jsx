@@ -111,7 +111,7 @@ function Tasks() {
       }
       reset()
       fetchTasks(selectedFolder)
-      // Show the task list after creating/updating a task
+      // Mostrar la lista de tareas después de crear/actualizar una tarea
       setShowForm(false)
       setInlineEditingTaskId(null)
     } catch (error) {
@@ -124,7 +124,7 @@ function Tasks() {
       let isValid = true
 
       switch (id) {
-        case 3:
+        case 2: // Cambiado de 3 a 2
           if (numberRepeat < 0 || numberRepeat > 2) isValid = false
           break
         case 7:
@@ -159,6 +159,8 @@ function Tasks() {
       }
 
       setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, completed: true } : task)))
+      // Mostrar el formulario cuando se complete la tarea
+      setShowForm(true)
     } catch (error) {
       console.error("Error completing task:", error)
     }
@@ -310,6 +312,19 @@ function Tasks() {
                       </div>
                     )}
 
+                    <div className="space-y-2">
+                      <Label htmlFor="numberRepeat" className="text-notion-text dark:text-notion-text-dark">
+                        Number of Repeats
+                      </Label>
+                      <Input
+                        id="numberRepeat"
+                        type="number"
+                        className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                        {...register("numberRepeat", { required: "Number of repeats is required", min: 0 })}
+                      />
+                      {errors.numberRepeat && <p className="text-sm text-red-500">{errors.numberRepeat.message}</p>}
+                    </div>
+
                     <div className="flex justify-between">
                       <Button type="submit" className="bg-notion-orange hover:bg-notion-orange-dark text-white">
                         {editingTask ? "Update Task" : "Create Task"}
@@ -429,6 +444,32 @@ function Tasks() {
                                     </div>
                                   )}
 
+                                  <div className="space-y-2">
+                                    <Label
+                                      htmlFor={`numberRepeat-${task.id}`}
+                                      className="text-notion-text dark:text-notion-text-dark"
+                                    >
+                                      Number of Repeats
+                                    </Label>
+                                    <Input
+                                      id={`numberRepeat-${task.id}`}
+                                      type="number"
+                                      className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                      value={numberRepeat || ""}
+                                      onChange={(e) => setNumberRepeat(Number(e.target.value))}
+                                      min="0"
+                                      max={
+                                        task.id === 2
+                                          ? 2
+                                          : task.id === 7
+                                          ? 5
+                                          : task.id === 11
+                                          ? 3
+                                          : 5
+                                      }
+                                    />
+                                  </div>
+
                                   <div className="flex justify-between">
                                     <Button
                                       type="submit"
@@ -472,7 +513,7 @@ function Tasks() {
                                       Points: {task.points}
                                     </p>
                                   )}
-                                  {(task.id === 3 || task.id === 7 || task.id === 11 || task.id === 25) && (
+                                  {(task.id === 2 || task.id === 7 || task.id === 11 || task.id === 25) && (
                                     <div className="space-y-2 mt-2">
                                       <Label
                                         htmlFor={`numberRepeat-${task.id}`}
