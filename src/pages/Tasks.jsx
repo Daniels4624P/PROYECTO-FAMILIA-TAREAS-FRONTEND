@@ -65,6 +65,7 @@ function Tasks() {
       setFolders([...publicFoldersData.data, ...privateFoldersData.data])
     } catch (error) {
       console.error("Error fetching folders:", error)
+      showAlert("Error al cargar las carpetas")
     }
   }
 
@@ -75,6 +76,7 @@ function Tasks() {
       setTasks(response.data.tasks.length ? response.data.tasks : [])
     } catch (error) {
       console.error("Error fetching tasks:", error)
+      showAlert("Error al cargar las tareas")
       setTasks([])
     } finally {
       setLoadingTasks(false)
@@ -116,15 +118,42 @@ function Tasks() {
       setInlineEditingTaskId(null)
     } catch (error) {
       console.error("Error creating/updating task:", error)
+      showAlert("Error al crear/actualizar la tarea")
     }
   }
 
   const handleCompleteTask = async (id, folderId) => {
     try {
+      // Check if numberRepeat is required for this task ID
+      const requiresNumberRepeat = [2, 7, 11, 25].includes(id)
+
+      // If numberRepeat is required but not provided or is null
+      if (requiresNumberRepeat && (numberRepeat === null || numberRepeat === undefined)) {
+        const alertElement = document.createElement("div")
+        alertElement.className =
+          "fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50"
+        alertElement.innerHTML = `
+          <div class="flex items-start">
+            <div class="ml-3">
+              <p class="font-medium">Error</p>
+              <ul class="mt-1 list-disc list-inside">
+                <li>Debe ingresar un valor para Number of Repeats.</li>
+              </ul>
+            </div>
+          </div>
+        `
+        document.body.appendChild(alertElement)
+        setTimeout(() => {
+          alertElement.classList.add("opacity-0", "transition-opacity", "duration-500")
+          setTimeout(() => document.body.removeChild(alertElement), 500)
+        }, 3000)
+        return
+      }
+
       let isValid = true
 
       switch (id) {
-        case 2: // Cambiado de 3 a 2
+        case 2:
           if (numberRepeat < 0 || numberRepeat > 2) isValid = false
           break
         case 7:
@@ -141,7 +170,24 @@ function Tasks() {
       }
 
       if (!isValid) {
-        alert('El valor de numberRepeat no es válido.')
+        const alertElement = document.createElement("div")
+        alertElement.className =
+          "fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50"
+        alertElement.innerHTML = `
+          <div class="flex items-start">
+            <div class="ml-3">
+              <p class="font-medium">Error</p>
+              <ul class="mt-1 list-disc list-inside">
+                <li>El valor de numberRepeat no es válido.</li>
+              </ul>
+            </div>
+          </div>
+        `
+        document.body.appendChild(alertElement)
+        setTimeout(() => {
+          alertElement.classList.add("opacity-0", "transition-opacity", "duration-500")
+          setTimeout(() => document.body.removeChild(alertElement), 500)
+        }, 3000)
         return
       }
 
@@ -149,7 +195,7 @@ function Tasks() {
       const isTaskPublic = publicFolders.includes(folderId)
 
       const taskData = {
-        numberRepeat: (id === 2 || id === 7 || id === 11 || id === 25) ? numberRepeat : undefined,
+        numberRepeat: id === 2 || id === 7 || id === 11 || id === 25 ? numberRepeat : undefined,
       }
 
       if (isTaskPublic) {
@@ -163,6 +209,7 @@ function Tasks() {
       setShowForm(true)
     } catch (error) {
       console.error("Error completing task:", error)
+      showAlert("Error al completar la tarea")
     }
   }
 
@@ -193,7 +240,37 @@ function Tasks() {
       fetchTasks(selectedFolder)
     } catch (error) {
       console.error("Error deleting task:", error)
+      showAlert("Error al eliminar la tarea")
     }
+  }
+
+  useEffect(() => {
+    // Reset numberRepeat when changing tasks or folders
+    setNumberRepeat(null)
+  }, [selectedFolder, inlineEditingTaskId, editingTask])
+
+  const showAlert = (message, type = "error") => {
+    const alertElement = document.createElement("div")
+    const bgColor = type === "error" ? "bg-red-100" : "bg-green-100"
+    const borderColor = type === "error" ? "border-red-500" : "border-green-500"
+    const textColor = type === "error" ? "text-red-700" : "text-green-700"
+
+    alertElement.className = `fixed top-4 right-4 ${bgColor} border-l-4 ${borderColor} ${textColor} p-4 rounded shadow-md z-50`
+    alertElement.innerHTML = `
+      <div class="flex items-start">
+        <div class="ml-3">
+          <p class="font-medium">${type === "error" ? "Error" : "Éxito"}</p>
+          <ul class="mt-1 list-disc list-inside">
+            <li>${message}</li>
+          </ul>
+        </div>
+      </div>
+    `
+    document.body.appendChild(alertElement)
+    setTimeout(() => {
+      alertElement.classList.add("opacity-0", "transition-opacity", "duration-500")
+      setTimeout(() => document.body.removeChild(alertElement), 500)
+    }, 3000)
   }
 
   return (
@@ -458,15 +535,7 @@ function Tasks() {
                                       value={numberRepeat || ""}
                                       onChange={(e) => setNumberRepeat(Number(e.target.value))}
                                       min="0"
-                                      max={
-                                        task.id === 2
-                                          ? 2
-                                          : task.id === 7
-                                          ? 5
-                                          : task.id === 11
-                                          ? 3
-                                          : 5
-                                      }
+                                      max={task.id === 2 ? 2 : task.id === 7 ? 5 : task.id === 11 ? 3 : 5}
                                     />
                                   </div>
 
@@ -519,7 +588,7 @@ function Tasks() {
                                         htmlFor={`numberRepeat-${task.id}`}
                                         className="text-notion-text dark:text-notion-text-dark"
                                       >
-                                        Number of Repeats
+                                        Number of Repeats <span className="text-red-500">*</span>
                                       </Label>
                                       <Input
                                         id={`numberRepeat-${task.id}`}
@@ -528,16 +597,18 @@ function Tasks() {
                                         value={numberRepeat || ""}
                                         onChange={(e) => setNumberRepeat(Number(e.target.value))}
                                         min="0"
-                                        max={
-                                          task.id === 2
-                                            ? 2
-                                            : task.id === 7
-                                            ? 5
-                                            : task.id === 11
-                                            ? 3
-                                            : 5
-                                        }
+                                        max={task.id === 2 ? 2 : task.id === 7 ? 5 : task.id === 11 ? 3 : 5}
+                                        required
                                       />
+                                      <p className="text-xs text-amber-600">
+                                        {task.id === 2
+                                          ? "Máximo 2 repeticiones"
+                                          : task.id === 7
+                                            ? "Máximo 5 repeticiones"
+                                            : task.id === 11
+                                              ? "Máximo 3 repeticiones"
+                                              : "Máximo 5 repeticiones"}
+                                      </p>
                                     </div>
                                   )}
                                   <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
@@ -590,3 +661,4 @@ function Tasks() {
 }
 
 export default Tasks
+
