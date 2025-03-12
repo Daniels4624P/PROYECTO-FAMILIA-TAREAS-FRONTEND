@@ -149,13 +149,13 @@ function Tasks() {
       const isTaskPublic = publicFolders.includes(folderId)
 
       const taskData = {
-        numberRepeat: (id === 3 || id === 7 || id === 11 || id === 25) ? numberRepeat : undefined,
+        numberRepeat: (id === 2 || id === 7 || id === 11 || id === 25) ? numberRepeat : undefined,
       }
 
       if (isTaskPublic) {
         await completePublicTask(id, token, taskData)
       } else {
-        await completePrivateTask(id, token)
+        await completePrivateTask(id, token, taskData)
       }
 
       setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, completed: true } : task)))
@@ -471,6 +471,33 @@ function Tasks() {
                                     <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
                                       Points: {task.points}
                                     </p>
+                                  )}
+                                  {(task.id === 3 || task.id === 7 || task.id === 11 || task.id === 25) && (
+                                    <div className="space-y-2 mt-2">
+                                      <Label
+                                        htmlFor={`numberRepeat-${task.id}`}
+                                        className="text-notion-text dark:text-notion-text-dark"
+                                      >
+                                        Number of Repeats
+                                      </Label>
+                                      <Input
+                                        id={`numberRepeat-${task.id}`}
+                                        type="number"
+                                        className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                        value={numberRepeat || ""}
+                                        onChange={(e) => setNumberRepeat(Number(e.target.value))}
+                                        min="0"
+                                        max={
+                                          task.id === 2
+                                            ? 2
+                                            : task.id === 7
+                                            ? 5
+                                            : task.id === 11
+                                            ? 3
+                                            : 5
+                                        }
+                                      />
+                                    </div>
                                   )}
                                   <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
                                     Status:{" "}
