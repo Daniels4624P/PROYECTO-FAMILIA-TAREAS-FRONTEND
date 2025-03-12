@@ -185,13 +185,11 @@ function Tasks() {
         numberRepeat: numberRepeat,
       }
 
-      console.log("Enviando datos:", taskData) // Para depuración
-
       // Llamar a la API correspondiente
       if (isTaskPublic) {
         await completePublicTask(completingTaskId, token, taskData)
       } else {
-        await completePrivateTask(completingTaskId, token, taskData)
+        await completePrivateTask(completingTaskId, token)
       }
 
       // Actualizar el estado local
