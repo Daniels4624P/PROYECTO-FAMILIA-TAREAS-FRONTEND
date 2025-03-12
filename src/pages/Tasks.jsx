@@ -185,11 +185,13 @@ function Tasks() {
         numberRepeat: numberRepeat,
       }
 
+      console.log("Enviando datos:", taskData) // Para depuración
+
       // Llamar a la API correspondiente
       if (isTaskPublic) {
         await completePublicTask(completingTaskId, token, taskData)
       } else {
-        await completePrivateTask(completingTaskId, token)
+        await completePrivateTask(completingTaskId, token, taskData)
       }
 
       // Actualizar el estado local
@@ -221,7 +223,7 @@ function Tasks() {
       if (isTaskPublic) {
         await completePublicTask(id, token, taskData)
       } else {
-        await completePrivateTask(id, token, taskData)
+        await completePrivateTask(id, token)
       }
 
       setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, completed: true } : task)))
@@ -233,23 +235,24 @@ function Tasks() {
   }
 
   const handleEditTask = (task) => {
-    if (showForm) {
-      // Use the main form if it's already visible
-      setEditingTask(task)
-      setValue("task", task.task)
-      setValue("description", task.description)
-      setValue("points", task.points)
-      if (task.date) {
-        const dateObj = new Date(task.date)
-        const formattedDate = dateObj.toISOString().slice(0, 16) // Format: "YYYY-MM-DDTHH:mm"
-        setValue("date", formattedDate)
-      } else {
-        setValue("date", "")
-      }
+    // Siempre mostrar el formulario principal para editar
+    setShowForm(true)
+    setEditingTask(task)
+    setValue("task", task.task)
+    setValue("description", task.description)
+    setValue("points", task.points)
+    if (task.date) {
+      const dateObj = new Date(task.date)
+      const formattedDate = dateObj.toISOString().slice(0, 16) // Format: "YYYY-MM-DDTHH:mm"
+      setValue("date", formattedDate)
     } else {
-      // Use inline editing
-      setInlineEditingTaskId(task.id)
+      setValue("date", "")
     }
+
+    // Desplazarse al formulario
+    setTimeout(() => {
+      document.querySelector(".border.p-4.rounded-md")?.scrollIntoView({ behavior: "smooth" })
+    }, 100)
   }
 
   const handleDeleteTask = async (id) => {
@@ -414,18 +417,20 @@ function Tasks() {
                       </div>
                     )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="numberRepeat" className="text-notion-text dark:text-notion-text-dark">
-                        Number of Repeats
-                      </Label>
-                      <Input
-                        id="numberRepeat"
-                        type="number"
-                        className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
-                        {...register("numberRepeat", { required: "Number of repeats is required", min: 0 })}
-                      />
-                      {errors.numberRepeat && <p className="text-sm text-red-500">{errors.numberRepeat.message}</p>}
-                    </div>
+                    {!editingTask && (
+                      <div className="space-y-2">
+                        <Label htmlFor="numberRepeat" className="text-notion-text dark:text-notion-text-dark">
+                          Number of Repeats
+                        </Label>
+                        <Input
+                          id="numberRepeat"
+                          type="number"
+                          className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                          {...register("numberRepeat", { required: "Number of repeats is required", min: 0 })}
+                        />
+                        {errors.numberRepeat && <p className="text-sm text-red-500">{errors.numberRepeat.message}</p>}
+                      </div>
+                    )}
 
                     <div className="flex justify-between">
                       <Button type="submit" className="bg-notion-orange hover:bg-notion-orange-dark text-white">
@@ -622,21 +627,7 @@ function Tasks() {
                                     </div>
                                   )}
 
-                                  <div className="space-y-2">
-                                    <Label
-                                      htmlFor={`numberRepeat-${task.id}`}
-                                      className="text-notion-text dark:text-notion-text-dark"
-                                    >
-                                      Number of Repeats
-                                    </Label>
-                                    <Input
-                                      id={`numberRepeat-${task.id}`}
-                                      type="number"
-                                      className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
-                                      defaultValue={task.numberRepeat || ""}
-                                      {...register("numberRepeat", { min: 0 })}
-                                    />
-                                  </div>
+                                  {/* El campo numberRepeat se ha eliminado del formulario de edición */}
 
                                   <div className="flex justify-between">
                                     <Button
