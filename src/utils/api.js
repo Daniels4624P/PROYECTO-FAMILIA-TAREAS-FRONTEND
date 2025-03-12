@@ -77,10 +77,10 @@ export const deleteTask = (id, token) => {
       Authorization: `Bearer ${token}`
     }
   });*/
-export const completePublicTask = (id, token) =>
+export const completePublicTask = (id, token, numberRepeat) =>
   api.patch(
     `/tasks/${id}/complete/task/public`,
-    {},
+    numberRepeat,
     {
       headers: {
         Authorization: `Bearer ${token}`,
