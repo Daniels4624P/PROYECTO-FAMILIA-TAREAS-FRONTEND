@@ -223,7 +223,7 @@ function Tasks() {
       if (isTaskPublic) {
         await completePublicTask(id, token, taskData)
       } else {
-        await completePrivateTask(id, token)
+        await completePrivateTask(id, token, taskData)
       }
 
       setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, completed: true } : task)))
@@ -417,20 +417,7 @@ function Tasks() {
                       </div>
                     )}
 
-                    {!editingTask && (
-                      <div className="space-y-2">
-                        <Label htmlFor="numberRepeat" className="text-notion-text dark:text-notion-text-dark">
-                          Number of Repeats
-                        </Label>
-                        <Input
-                          id="numberRepeat"
-                          type="number"
-                          className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
-                          {...register("numberRepeat", { required: "Number of repeats is required", min: 0 })}
-                        />
-                        {errors.numberRepeat && <p className="text-sm text-red-500">{errors.numberRepeat.message}</p>}
-                      </div>
-                    )}
+                    {/* Eliminar completamente el campo numberRepeat del formulario de creación */}
 
                     <div className="flex justify-between">
                       <Button type="submit" className="bg-notion-orange hover:bg-notion-orange-dark text-white">
