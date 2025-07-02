@@ -2,13 +2,25 @@ import axios from "axios"
 
 const API_URL = "https://api-familia-tareas-node.onrender.com" // Reemplaza con la URL de tu API
 
+// Función para obtener el token de las cookies
+const getTokenFromCookies = () => {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'token' || name === 'accessToken') { // Ajusta el nombre según tu cookie
+      return value;
+    }
+  }
+  return null;
+};
+
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true, // Habilita el envío y recepción de cookies
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token")
+  const token = getTokenFromCookies(); // Cambiado de localStorage a cookies
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -19,15 +31,8 @@ export const registerUser = (userData) => api.post("/auth/register", userData)
 export const loginUser = (credentials) => api.post("/auth/login", credentials)
 export const getUserProfile = () => api.get("/auth/profile")
 export const getUser = (id) => api.get(`/users/${id}`)
-export const getUserHistory = (token) => api.get(`/users/history`, {}, {
-  headers: {
-    Authorization: `Bearer ${token}`
-  }
-})
-export const getUserPoints = (id, token) => api.get(`/users/${id}/points`, {}, {
-  headers: {
-    Authorization: `Bearer ${token}`
-  }})
+export const getUserHistory = () => api.get(`/users/history`) // Removido token manual
+export const getUserPoints = (id) => api.get(`/users/${id}/points`) // Removido token manual
 export const getUsersPoints = () => api.get("/users/points");
 export const createProject = (projectData) => api.post("/projects", projectData)
 export const getPublicProjects = () => api.get("/projects/public")
@@ -43,77 +48,60 @@ export const getFolder = (id) => api.get(`/folders/${id}`)
 export const updateFolder = (id, folderData) => api.patch(`/folders/${id}`, folderData)
 export const deleteFolder = (id) => api.delete(`/folders/${id}`)
 
-export const createTask = async (taskData, token) => {
+export const createTask = async (taskData) => { // Removido token manual
+  const token = getTokenFromCookies();
   return fetch("https://api-familia-tareas-node.onrender.com/tasks", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`, // Envío del JWT
+      Authorization: `Bearer ${token}`,
     },
-    credentials: 'include', // Incluye cookies en la petición
+    credentials: 'include',
     body: JSON.stringify(taskData),
   }).then((res) => res.json());
 };
 
 export const getFolderTasks = (folderId) => api.get(`/folders/${folderId}/tasks`)
 
-export const updateTask = (id, taskData, token) => {
+export const updateTask = (id, taskData) => { // Removido token manual
+  const token = getTokenFromCookies();
   return fetch(`https://api-familia-tareas-node.onrender.com/tasks/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    credentials: 'include', // Incluye cookies en la petición
+    credentials: 'include',
     body: JSON.stringify(taskData),
   }).then((res) => res.json())
 }
 
-export const deleteTask = (id, token) => {
+export const deleteTask = (id) => { // Removido token manual
+  const token = getTokenFromCookies();
   return fetch(`https://api-familia-tareas-node.onrender.com/tasks/${id}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    credentials: 'include', // Incluye cookies en la petición
+    credentials: 'include',
   }).then((res) => res.json())
 }
 
-/*export const completeTask = (id, token) => 
-  api.patch(`/tasks/${id}/complete`, {}, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });*/
-
-export const completePublicTask = (id, token, numberRepeat) =>
+export const completePublicTask = (id, numberRepeat) => // Removido token manual
   api.patch(
     `/tasks/${id}/complete/task/public`,
-    numberRepeat,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
+    numberRepeat
   )
 
-export const completePrivateTask = (id, token) =>
+export const completePrivateTask = (id) => // Removido token manual
   api.patch(
     `/tasks/${id}/complete/task/private`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
+    {}
   )
 
-export const fetchTasksForMonth = (token, year, month) => 
+export const fetchTasksForMonth = (year, month) => // Removido token manual
   api.get(`/tasks/monthly`, {
-    params: { year, month },
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+    params: { year, month }
   });
 
 export const sendRecoveryEmail = (email) => api.post("/auth/recovery", { email })
@@ -174,11 +162,12 @@ export const getCategories = () => {
 // Finances
 export const exportFinances = async (year, month, type) => {
     try {
+      const token = getTokenFromCookies(); // Cambiado de localStorage a cookies
       const response = await axios.get(`${API_URL}/finances/export?year=${year}&month=${month}&type=${type}`, {
-        responseType: 'blob', // Important for handling file downloads
-        withCredentials: true, // Habilita cookies para esta petición específica
+        responseType: 'blob',
+        withCredentials: true,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming you're using JWT
+          'Authorization': `Bearer ${token}`
         }
       });
       return response;
