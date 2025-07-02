@@ -4,6 +4,7 @@ const API_URL = "https://api-familia-tareas-node.onrender.com" // Reemplaza con 
 
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // Habilita el envío y recepción de cookies
 })
 
 api.interceptors.request.use((config) => {
@@ -41,6 +42,7 @@ export const getPrivateFolders = () => api.get("/folders/private")
 export const getFolder = (id) => api.get(`/folders/${id}`)
 export const updateFolder = (id, folderData) => api.patch(`/folders/${id}`, folderData)
 export const deleteFolder = (id) => api.delete(`/folders/${id}`)
+
 export const createTask = async (taskData, token) => {
   return fetch("https://api-familia-tareas-node.onrender.com/tasks", {
     method: "POST",
@@ -48,10 +50,13 @@ export const createTask = async (taskData, token) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`, // Envío del JWT
     },
+    credentials: 'include', // Incluye cookies en la petición
     body: JSON.stringify(taskData),
   }).then((res) => res.json());
 };
+
 export const getFolderTasks = (folderId) => api.get(`/folders/${folderId}/tasks`)
+
 export const updateTask = (id, taskData, token) => {
   return fetch(`https://api-familia-tareas-node.onrender.com/tasks/${id}`, {
     method: "PATCH",
@@ -59,6 +64,7 @@ export const updateTask = (id, taskData, token) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    credentials: 'include', // Incluye cookies en la petición
     body: JSON.stringify(taskData),
   }).then((res) => res.json())
 }
@@ -69,14 +75,17 @@ export const deleteTask = (id, token) => {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    credentials: 'include', // Incluye cookies en la petición
   }).then((res) => res.json())
 }
+
 /*export const completeTask = (id, token) => 
   api.patch(`/tasks/${id}/complete`, {}, {
     headers: {
       Authorization: `Bearer ${token}`
     }
   });*/
+
 export const completePublicTask = (id, token, numberRepeat) =>
   api.patch(
     `/tasks/${id}/complete/task/public`,
@@ -167,6 +176,7 @@ export const exportFinances = async (year, month, type) => {
     try {
       const response = await axios.get(`${API_URL}/finances/export?year=${year}&month=${month}&type=${type}`, {
         responseType: 'blob', // Important for handling file downloads
+        withCredentials: true, // Habilita cookies para esta petición específica
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming you're using JWT
         }
