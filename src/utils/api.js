@@ -7,11 +7,28 @@ const getTokenFromCookies = () => {
   const cookies = document.cookie.split(';');
   for (let cookie of cookies) {
     const [name, value] = cookie.trim().split('=');
-    if (name === 'token' || name === 'accessToken') { // Ajusta el nombre según tu cookie
-      return value;
+    if (name === 'token' || name === 'accessToken' || name === 'authToken') { // Ajusta el nombre según tu cookie
+      return decodeURIComponent(value); // Decodifica por si tiene caracteres especiales
     }
   }
   return null;
+};
+
+// Función para eliminar cookies (útil para logout)
+const removeCookie = (name) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
+
+// Función para obtener todas las cookies como objeto
+const getAllCookies = () => {
+  const cookies = {};
+  document.cookie.split(';').forEach(cookie => {
+    const [name, value] = cookie.trim().split('=');
+    if (name && value) {
+      cookies[name] = decodeURIComponent(value);
+    }
+  });
+  return cookies;
 };
 
 const api = axios.create({
@@ -20,15 +37,64 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = getTokenFromCookies(); // Cambiado de localStorage a cookies
+  const token = getTokenFromCookies();
+  console.log('Token from cookies:', token ? 'Token found' : 'No token'); // Debug
+  console.log('All cookies:', getAllCookies()); // Debug - puedes remover esto después
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
+}, (error) => {
+  return Promise.reject(error);
 })
+
+// Interceptor de respuesta para manejar errores de autenticación
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // Intentar refresh del token
+        const refreshResponse = await api.post('/auth/refresh');
+        
+        if (refreshResponse.status === 200) {
+          // Si el refresh fue exitoso, reintentar la petición original
+          const newToken = getTokenFromCookies();
+          if (newToken) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return api(originalRequest);
+          }
+        }
+      } catch (refreshError) {
+        console.error('Error refreshing token:', refreshError);
+        // Si el refresh falla, redirigir al login o limpiar cookies
+        removeCookie('token');
+        removeCookie('accessToken');
+        removeCookie('authToken');
+        // Opcional: redirigir al login
+        // window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+)
 
 export const registerUser = (userData) => api.post("/auth/register", userData)
 export const loginUser = (credentials) => api.post("/auth/login", credentials)
+export const logoutUser = () => {
+  // Limpiar cookies
+  removeCookie('token');
+  removeCookie('accessToken');
+  removeCookie('authToken');
+  removeCookie('refreshToken');
+  return api.post("/auth/logout");
+}
 export const getUserProfile = () => api.get("/auth/profile")
 export const getUser = (id) => api.get(`/users/${id}`)
 export const getUserHistory = () => api.get(`/users/history`) // Removido token manual
