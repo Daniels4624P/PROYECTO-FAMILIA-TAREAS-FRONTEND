@@ -44,7 +44,7 @@ function Sidebar({ isOpen, setIsOpen }) {
   const handleLogout = async () => {
     try {
       // Hacer la petición POST al endpoint de refresh
-      const response = await fetch("https://api-familia-tareas-node.onrender.com/auth/refreshAttachment", {
+      const response = await fetch("https://api-familia-tareas-node.onrender.com/auth/refresh", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
