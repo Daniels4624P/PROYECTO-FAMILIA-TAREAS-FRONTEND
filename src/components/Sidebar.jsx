@@ -41,9 +41,32 @@ function Sidebar({ isOpen, setIsOpen }) {
     setIsOpen(!isOpen)
   }
 
-  const handleLogout = () => {
-    logout()
-    setIsOpen(false)
+  const handleLogout = async () => {
+    try {
+      // Hacer la petición POST al endpoint de refresh
+      const response = await fetch("https://api-familia-tareas-node.onrender.com/auth/refreshAttachment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Incluir el token de autorización si es necesario
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        // Agregar body si es necesario
+        body: JSON.stringify({}),
+      })
+
+      if (response.ok) {
+        console.log("Logout request successful")
+      } else {
+        console.error("Logout request failed:", response.status)
+      }
+    } catch (error) {
+      console.error("Error during logout request:", error)
+    } finally {
+      // Ejecutar el logout local independientemente del resultado de la petición
+      logout()
+      setIsOpen(false)
+    }
   }
 
   return (
@@ -253,4 +276,3 @@ function Sidebar({ isOpen, setIsOpen }) {
 }
 
 export default Sidebar
-
