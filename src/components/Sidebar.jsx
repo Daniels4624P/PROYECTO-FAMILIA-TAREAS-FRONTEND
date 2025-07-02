@@ -46,6 +46,7 @@ function Sidebar({ isOpen, setIsOpen }) {
       // Hacer la petición POST al endpoint de refresh
       const response = await fetch("https://api-familia-tareas-node.onrender.com/auth/refresh", {
         method: "POST",
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json",
           // Incluir el token de autorización si es necesario
