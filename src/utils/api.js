@@ -1,105 +1,200 @@
 import axios from "axios"
 
-const API_URL = "https://api-familia-tareas-node.onrender.com" // Reemplaza con la URL de tu API
-
-// Función para obtener el token de las cookies
-const getTokenFromCookies = () => {
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
-    if (name === 'token' || name === 'accessToken' || name === 'authToken') { // Ajusta el nombre según tu cookie
-      return decodeURIComponent(value); // Decodifica por si tiene caracteres especiales
-    }
-  }
-  return null;
-};
-
-// Función para eliminar cookies (útil para logout)
-const removeCookie = (name) => {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-};
-
-// Función para obtener todas las cookies como objeto
-const getAllCookies = () => {
-  const cookies = {};
-  document.cookie.split(';').forEach(cookie => {
-    const [name, value] = cookie.trim().split('=');
-    if (name && value) {
-      cookies[name] = decodeURIComponent(value);
-    }
-  });
-  return cookies;
-};
+const API_URL = "http://localhost:3000"
 
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Habilita el envío y recepción de cookies
+  withCredentials: true,
 })
 
-api.interceptors.request.use((config) => {
-  const token = getTokenFromCookies();
-  console.log('Token from cookies:', token ? 'Token found' : 'No token'); // Debug
-  console.log('All cookies:', getAllCookies()); // Debug - puedes remover esto después
-  
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-}, (error) => {
-  return Promise.reject(error);
-})
+// Variable para evitar múltiples intentos de refresh simultáneos
+let isRefreshing = false
+let failedQueue = []
 
-// Interceptor de respuesta para manejar errores de autenticación
+// Variable global para almacenar la función de actualización del contexto
+let updateAuthContext = null
+
+// Función para registrar el callback del contexto
+export const setAuthContextUpdater = (updaterFunction) => {
+  updateAuthContext = updaterFunction
+  console.log("🔧 Auth context updater registered")
+}
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error)
+    } else {
+      resolve(token)
+    }
+  })
+
+  failedQueue = []
+}
+
+// Interceptor de respuesta para manejar errores de autenticación y refresh automático
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-    
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
+    const originalRequest = error.config
+
+    console.log("🚨 Interceptor triggered:", {
+      status: error.response?.status,
+      url: originalRequest?.url,
+      baseURL: originalRequest?.baseURL,
+      fullURL: `${originalRequest?.baseURL || API_URL}${originalRequest?.url}`,
+      retry: originalRequest?._retry,
+    })
+
+    // Solo hacer refresh si es 401 y no hemos intentado antes
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.skipAuthRefresh &&
+      !originalRequest.url.includes("/auth/refresh") &&
+      !originalRequest.url.includes("/auth/login") &&
+      !originalRequest.url.includes("/auth/register")
+    ) {
+      console.log("🔄 Token expired, attempting refresh...")
+
+      if (isRefreshing) {
+        console.log("⏳ Already refreshing, adding to queue")
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then(() => {
+            console.log("🔄 Retrying queued request after refresh completed")
+            return api(originalRequest)
+          })
+          .catch((err) => {
+            return Promise.reject(err)
+          })
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
       try {
-        // Intentar refresh del token
-        const refreshResponse = await api.post('/auth/refresh');
-        
-        if (refreshResponse.status === 200) {
-          // Si el refresh fue exitoso, reintentar la petición original
-          const newToken = getTokenFromCookies();
-          if (newToken) {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            return api(originalRequest);
+        console.log("🔄 Step 1: Making refresh request to /auth/refresh...")
+        console.log("🔄 Full refresh URL:", `${API_URL}/auth/refresh`)
+
+        // PASO 1: Refresh del token - con más debugging
+        const refreshResponse = await api.post("/auth/refresh")
+        console.log("✅ Step 1 completed: Token refresh successful:", {
+          status: refreshResponse.status,
+          statusText: refreshResponse.statusText,
+          headers: refreshResponse.headers,
+        })
+
+        // PASO 2: Obtener el perfil actualizado y actualizar contexto
+        console.log("🔄 Step 2: Fetching updated user profile...")
+        const profileResponse = await api.get("/auth/profile", { skipAuthRefresh: true })
+
+        if (profileResponse.data) {
+          console.log("✅ Step 2 completed: Profile fetched successfully:", profileResponse.data)
+
+          // PASO 3: Actualizar el contexto y esperar a que se complete
+          console.log("🔄 Step 3: Updating auth context...")
+          if (updateAuthContext && typeof updateAuthContext === "function") {
+            updateAuthContext(profileResponse.data)
+            console.log("✅ Step 3 completed: Auth context updated")
+          }
+
+          // PASO 4: Disparar evento y dar tiempo para que se procese
+          if (typeof window !== "undefined") {
+            console.log("🔄 Step 4: Dispatching auth refresh event...")
+            const authRefreshEvent = new CustomEvent("auth-refresh-success", {
+              detail: {
+                user: profileResponse.data,
+                timestamp: Date.now(),
+              },
+            })
+            window.dispatchEvent(authRefreshEvent)
+
+            // Dar un pequeño delay para que el evento se procese
+            await new Promise((resolve) => setTimeout(resolve, 100))
+            console.log("✅ Step 4 completed: Event dispatched and processed")
           }
         }
+
+        // PASO 5: Procesar la cola de peticiones pendientes
+        console.log("🔄 Step 5: Processing queued requests...")
+        processQueue(null)
+        isRefreshing = false
+        console.log("✅ Step 5 completed: Queue processed")
+
+        // PASO 6: Reintentar la petición original
+        console.log("🔄 Step 6: Retrying original request:", originalRequest.url)
+        const retryResponse = await api(originalRequest)
+        console.log("✅ Step 6 completed: Original request successful")
+
+        return retryResponse
       } catch (refreshError) {
-        console.error('Error refreshing token:', refreshError);
-        // Si el refresh falla, redirigir al login o limpiar cookies
-        removeCookie('token');
-        removeCookie('accessToken');
-        removeCookie('authToken');
-        // Opcional: redirigir al login
-        // window.location.href = '/login';
+        console.error("❌ Token refresh process failed:", {
+          status: refreshError.response?.status,
+          statusText: refreshError.response?.statusText,
+          message: refreshError.message,
+          url: refreshError.config?.url,
+          fullURL: `${refreshError.config?.baseURL || API_URL}${refreshError.config?.url}`,
+          data: refreshError.response?.data,
+        })
+
+        processQueue(refreshError)
+        isRefreshing = false
+
+        // Si es 404, significa que la ruta no existe o el servidor no está disponible
+        if (refreshError.response?.status === 404) {
+          console.error("🚨 CRITICAL: Refresh endpoint not found! Check if backend is running and route exists")
+          console.error("🚨 Expected URL:", `${API_URL}/auth/refresh`)
+        }
+
+        // Solo limpiar contexto si realmente falló el refresh (401/403)
+        if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
+          console.log("🧹 Clearing auth context due to auth failure")
+          if (updateAuthContext && typeof updateAuthContext === "function") {
+            updateAuthContext(null)
+          }
+
+          // Disparar evento de fallo
+          if (typeof window !== "undefined") {
+            const authFailEvent = new CustomEvent("auth-refresh-failed", {
+              detail: { error: refreshError },
+            })
+            window.dispatchEvent(authFailEvent)
+          }
+        } else if (refreshError.response?.status === 404) {
+          // Para 404, no limpiar el contexto, solo loggear el error
+          console.error("🚨 Backend endpoint not available, keeping current auth state")
+        }
+
+        return Promise.reject(refreshError)
       }
     }
-    
-    return Promise.reject(error);
-  }
+
+    return Promise.reject(error)
+  },
 )
 
+// Auth endpoints
 export const registerUser = (userData) => api.post("/auth/register", userData)
 export const loginUser = (credentials) => api.post("/auth/login", credentials)
-export const logoutUser = () => {
-  // Limpiar cookies
-  removeCookie('token');
-  removeCookie('accessToken');
-  removeCookie('authToken');
-  removeCookie('refreshToken');
-  return api.post("/auth/logout");
+export const logoutUser = () => api.delete("/auth/logout")
+export const getUserProfile = (config = {}) => {
+  const requestConfig = { ...config }
+  if (config.skipAuthRefresh) {
+    requestConfig.skipAuthRefresh = true
+    delete requestConfig.skipAuthRefresh
+  }
+  return api.get("/auth/profile", requestConfig)
 }
-export const getUserProfile = () => api.get("/auth/profile")
+
+// User endpoints
 export const getUser = (id) => api.get(`/users/${id}`)
-export const getUserHistory = () => api.get(`/users/history`) // Removido token manual
-export const getUserPoints = (id) => api.get(`/users/${id}/points`) // Removido token manual
-export const getUsersPoints = () => api.get("/users/points");
+export const getUserHistory = () => api.get(`/users/history`)
+export const getUserPoints = (id) => api.get(`/users/${id}/points`)
+export const getUsersPoints = () => api.get("/users/points")
+
+// Project endpoints
 export const createProject = (projectData) => api.post("/projects", projectData)
 export const getPublicProjects = () => api.get("/projects/public")
 export const getPrivateProjects = () => api.get("/projects/private")
@@ -107,6 +202,8 @@ export const getProject = (id) => api.get(`/projects/${id}`)
 export const updateProject = (id, projectData) => api.patch(`/projects/${id}`, projectData)
 export const deleteProject = (id) => api.delete(`/projects/${id}`)
 export const completeProject = (id) => api.post(`/projects/${id}/complete`)
+
+// Folder endpoints
 export const createFolder = (folderData) => api.post("/folders", folderData)
 export const getPublicFolders = () => api.get("/folders/public")
 export const getPrivateFolders = () => api.get("/folders/private")
@@ -114,158 +211,118 @@ export const getFolder = (id) => api.get(`/folders/${id}`)
 export const updateFolder = (id, folderData) => api.patch(`/folders/${id}`, folderData)
 export const deleteFolder = (id) => api.delete(`/folders/${id}`)
 
-export const createTask = async (taskData) => { // Removido token manual
-  const token = getTokenFromCookies();
-  return fetch("https://api-familia-tareas-node.onrender.com/tasks", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    credentials: 'include',
-    body: JSON.stringify(taskData),
-  }).then((res) => res.json());
-};
+// Task endpoints
+export const createTask = (taskData) => {
+  return api.post("/tasks", taskData)
+}
 
 export const getFolderTasks = (folderId) => api.get(`/folders/${folderId}/tasks`)
 
-export const updateTask = (id, taskData) => { // Removido token manual
-  const token = getTokenFromCookies();
-  return fetch(`https://api-familia-tareas-node.onrender.com/tasks/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    credentials: 'include',
-    body: JSON.stringify(taskData),
-  }).then((res) => res.json())
+export const updateTask = (id, taskData) => {
+  return api.patch(`/tasks/${id}`, taskData)
 }
 
-export const deleteTask = (id) => { // Removido token manual
-  const token = getTokenFromCookies();
-  return fetch(`https://api-familia-tareas-node.onrender.com/tasks/${id}`, {
-    method: "DELETE",
+export const deleteTask = (id) => {
+  return api.delete(`/tasks/${id}`)
+}
+
+export const completePublicTask = (id, token, taskData) => {
+  return api.patch(`/tasks/${id}/complete/task/public`, taskData, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    credentials: 'include',
-  }).then((res) => res.json())
+  })
 }
 
-export const completePublicTask = (id, numberRepeat) => // Removido token manual
-  api.patch(
-    `/tasks/${id}/complete/task/public`,
-    numberRepeat
-  )
+export const completePrivateTask = (id, token, taskData) => {
+  return api.patch(`/tasks/${id}/complete/task/private`, taskData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+}
 
-export const completePrivateTask = (id) => // Removido token manual
-  api.patch(
-    `/tasks/${id}/complete/task/private`,
-    {}
-  )
+export const fetchTasksForMonth = (year, month) => {
+  const params = {}
 
-export const fetchTasksForMonth = (year, month) => // Removido token manual
-  api.get(`/tasks/monthly`, {
-    params: { year, month }
-  });
+  if (month && month !== "undefined" && month !== undefined && month !== null && Number(month) > 1900) {
+    if (!year || year === "undefined" || year === undefined || year === null) {
+      params.year = Number(month)
+      const currentMonth = new Date().getMonth() + 1
+      params.month = String(currentMonth).padStart(2, "0")
+    } else {
+      params.year = Number(year)
+      params.month = String(month).padStart(2, "0")
+    }
+  } else {
+    if (year && year !== "undefined" && year !== undefined && year !== null) {
+      params.year = Number(year)
+    }
+    if (month && month !== "undefined" && month !== undefined && month !== null && Number(month) <= 12) {
+      params.month = String(month).padStart(2, "0")
+    }
+  }
 
+  return api.get(`/tasks/tasks/monthly`, {
+    params: params,
+    paramsSerializer: {
+      serialize: (params) => {
+        const searchParams = new URLSearchParams()
+        Object.entries(params).forEach(([key, value]) => {
+          if (key === "month") {
+            searchParams.append(key, String(value))
+          } else {
+            searchParams.append(key, value)
+          }
+        })
+        return searchParams.toString()
+      },
+    },
+  })
+}
+
+// Password recovery
 export const sendRecoveryEmail = (email) => api.post("/auth/recovery", { email })
-
 export const changePassword = (token, newPassword) => api.post("/auth/change-password", { token, newPassword })
 
-// Accounts
-export const createAccount = (accountData) => {
-  return api.post('/accounts', accountData);
-};
+// Account endpoints
+export const createAccount = (accountData) => api.post("/accounts", accountData)
+export const getAccounts = () => api.get("/accounts")
+export const getAccount = (id) => api.get(`/accounts/${id}`)
+export const updateAccount = (id, accountData) => api.patch(`/accounts/${id}`, accountData)
+export const deleteAccount = (id) => api.delete(`/accounts/${id}`)
 
-export const getAccounts = () => {
-  return api.get('/accounts');
-};
+// Expense endpoints
+export const createExpense = (expenseData) => api.post("/expenses", expenseData)
+export const getExpenses = () => api.get("/expenses")
+export const getExpense = (id) => api.get(`/expenses/${id}`)
+export const updateExpense = (id, expenseData) => api.patch(`/expenses/${id}`, expenseData)
+export const deleteExpense = (id) => api.delete(`/expenses/${id}`)
 
-export const getAccount = (id) => {
-  return api.get(`/accounts/${id}`);
-};
+// Category endpoints
+export const createCategory = (categoryData) => api.post("/categories", categoryData)
+export const getCategories = () => api.get("/categories")
 
-export const updateAccount = (id, accountData) => {
-  return api.patch(`/accounts/${id}`, accountData);
-};
-
-export const deleteAccount = (id) => {
-  return api.delete(`/accounts/${id}`);
-};
-
-// Expenses
-export const createExpense = (expenseData) => {
-  return api.post('/expenses', expenseData);
-};
-
-export const getExpenses = () => {
-  return api.get('/expenses');
-};
-
-export const getExpense = (id) => {
-  return api.get(`/expenses/${id}`);
-};
-
-export const updateExpense = (id, expenseData) => {
-  return api.patch(`/expenses/${id}`, expenseData);
-};
-
-export const deleteExpense = (id) => {
-  return api.delete(`/expenses/${id}`);
-};
-
-// Categories
-export const createCategory = (categoryData) => {
-  return api.post('/categories', categoryData);
-};
-
-export const getCategories = () => {
-  return api.get('/categories');
-};
-
-// Finances
+// Finance endpoints
 export const exportFinances = async (year, month, type) => {
-    try {
-      const token = getTokenFromCookies(); // Cambiado de localStorage a cookies
-      const response = await axios.get(`${API_URL}/finances/export?year=${year}&month=${month}&type=${type}`, {
-        responseType: 'blob',
-        withCredentials: true,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      return response;
-    } catch (error) {
-      console.error("Error exporting finances:", error);
-      throw error;
-    }
-  };
-
-// Incomes
-export const createIncome = (incomeData) => {
-  return api.post('/incomes', incomeData);
-};
-
-export const getIncomes = () => {
-  return api.get('/incomes');
-};
-
-export const getIncome = (id) => {
-  return api.get(`/incomes/${id}`);
-};
-
-export const updateIncome = (id, incomeData) => {
-  return api.patch(`/incomes/${id}`, incomeData);
-};
-
-export const deleteIncome = (id) => {
-  return api.delete(`/incomes/${id}`);
-};
-
-export const getAccountStatistics = () => {
-  return api.get("/accounts/statistics/of/user")
+  try {
+    const response = await api.get(`/finances/export?year=${year}&month=${month}&type=${type}`, {
+      responseType: "blob",
+    })
+    return response
+  } catch (error) {
+    console.error("Error exporting finances:", error)
+    throw error
+  }
 }
 
-export default api;
+// Income endpoints
+export const createIncome = (incomeData) => api.post("/incomes", incomeData)
+export const getIncomes = () => api.get("/incomes")
+export const getIncome = (id) => api.get(`/incomes/${id}`)
+export const updateIncome = (id, incomeData) => api.patch(`/incomes/${id}`, incomeData)
+export const deleteIncome = (id) => api.delete(`/incomes/${id}`)
+
+export const getAccountStatistics = () => api.get("/accounts/statistics/of/user")
+
+export default api

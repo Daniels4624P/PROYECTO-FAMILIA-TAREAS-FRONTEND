@@ -19,7 +19,7 @@ import {
   completePrivateTask,
 } from "../utils/api"
 import Loader from "../components/Loader"
-import { Pencil, Trash2, ChevronUp, Plus, List, Calendar, X } from "lucide-react"
+import { Pencil, Trash2, ChevronUp, Plus, X } from "lucide-react"
 import TaskCalendar from "../components/TaskCalendar"
 
 function Tasks() {
@@ -29,7 +29,6 @@ function Tasks() {
   const [loadingTasks, setLoadingTasks] = useState(false)
   const [isPublic, setIsPublic] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
-  const [viewMode, setViewMode] = useState("list")
   const [isPrivateFolder, setIsPrivateFolder] = useState(false)
   const [publicFolders, setPublicFolders] = useState([])
   const [showForm, setShowForm] = useState(true)
@@ -75,6 +74,7 @@ function Tasks() {
     setLoadingTasks(true)
     try {
       const response = await getFolderTasks(folderId)
+
       setTasks(response.data.tasks.length ? response.data.tasks : [])
     } catch (error) {
       console.error("Error fetching tasks:", error)
@@ -93,7 +93,7 @@ function Tasks() {
 
   const handleDateTimeChange = (e) => {
     const datetime = e.target.value
-    setValue("date", datetime)
+    setValue("dateStart", datetime)
   }
 
   const onSubmit = async (data) => {
@@ -103,15 +103,19 @@ function Tasks() {
         folderId: selectedFolder,
         public: isPublic,
         points: isPublic ? (data.points ? Number.parseInt(data.points, 10) : 0) : null,
-        date: !isPublic && data.date ? new Date(data.date).toISOString() : null,
+        // Para tareas privadas: usar dateStart, para públicas: no enviar fecha
+        dateStart: !isPublic && data.dateStart ? new Date(data.dateStart).toISOString() : null,
+        // dateEnd siempre será null al crear/editar (solo se establece al completar)
+        dateEnd: null,
       }
 
-      const token = localStorage.getItem("token")
       if (editingTask) {
-        await updateTask(editingTask.id, taskData, token)
+        await updateTask(editingTask.id, taskData)
         setEditingTask(null)
+        showAlert("Tarea actualizada con éxito", "success")
       } else {
-        await createTask(taskData, token)
+        await createTask(taskData)
+        showAlert("Tarea creada con éxito", "success")
       }
       reset()
       fetchTasks(selectedFolder)
@@ -120,7 +124,7 @@ function Tasks() {
       setInlineEditingTaskId(null)
     } catch (error) {
       console.error("Error creating/updating task:", error)
-      showAlert("Error al crear/actualizar la tarea")
+      showAlert("Error al crear/actualizar la tarea: " + (error.response?.data?.message || error.message))
     }
   }
 
@@ -183,9 +187,9 @@ function Tasks() {
       // Siempre incluir numberRepeat en el body para las tareas específicas
       const taskData = {
         numberRepeat: numberRepeat,
+        // Para tareas privadas, incluir dateEnd con la fecha actual
+        ...(!isTaskPublic && { dateEnd: new Date().toISOString() }),
       }
-
-      console.log("Enviando datos:", taskData) // Para depuración
 
       // Llamar a la API correspondiente
       if (isTaskPublic) {
@@ -196,7 +200,16 @@ function Tasks() {
 
       // Actualizar el estado local
       setTasks((prevTasks) =>
-        prevTasks.map((task) => (task.id === completingTaskId ? { ...task, completed: true } : task)),
+        prevTasks.map((task) =>
+          task.id === completingTaskId
+            ? {
+                ...task,
+                completed: true,
+                // Si es tarea privada, agregar dateEnd
+                ...(!isTaskPublic && { dateEnd: new Date().toISOString() }),
+              }
+            : task,
+        ),
       )
 
       // Limpiar el estado
@@ -207,7 +220,7 @@ function Tasks() {
       showAlert("Tarea completada con éxito", "success")
     } catch (error) {
       console.error("Error completing task:", error)
-      showAlert("Error al completar la tarea")
+      showAlert("Error al completar la tarea: " + (error.response?.data?.message || error.message))
     }
   }
 
@@ -217,8 +230,11 @@ function Tasks() {
       const token = localStorage.getItem("token")
       const isTaskPublic = publicFolders.includes(folderId)
 
-      // Para tareas que no requieren numberRepeat, enviar un objeto vacío
-      const taskData = {}
+      // Para tareas que no requieren numberRepeat
+      const taskData = {
+        // Para tareas privadas, incluir dateEnd con la fecha actual
+        ...(!isTaskPublic && { dateEnd: new Date().toISOString() }),
+      }
 
       if (isTaskPublic) {
         await completePublicTask(id, token, taskData)
@@ -226,11 +242,22 @@ function Tasks() {
         await completePrivateTask(id, token, taskData)
       }
 
-      setTasks((prevTasks) => prevTasks.map((task) => (task.id === id ? { ...task, completed: true } : task)))
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                completed: true,
+                // Si es tarea privada, agregar dateEnd
+                ...(!isTaskPublic && { dateEnd: new Date().toISOString() }),
+              }
+            : task,
+        ),
+      )
       showAlert("Tarea completada con éxito", "success")
     } catch (error) {
       console.error("Error completing task:", error)
-      showAlert("Error al completar la tarea")
+      showAlert("Error al completar la tarea: " + (error.response?.data?.message || error.message))
     }
   }
 
@@ -241,12 +268,12 @@ function Tasks() {
     setValue("task", task.task)
     setValue("description", task.description)
     setValue("points", task.points)
-    if (task.date) {
-      const dateObj = new Date(task.date)
+    if (task.dateStart) {
+      const dateObj = new Date(task.dateStart)
       const formattedDate = dateObj.toISOString().slice(0, 16) // Format: "YYYY-MM-DDTHH:mm"
-      setValue("date", formattedDate)
+      setValue("dateStart", formattedDate)
     } else {
-      setValue("date", "")
+      setValue("dateStart", "")
     }
 
     // Desplazarse al formulario
@@ -257,12 +284,12 @@ function Tasks() {
 
   const handleDeleteTask = async (id) => {
     try {
-      const token = localStorage.getItem("token")
-      await deleteTask(id, token)
+      await deleteTask(id)
       fetchTasks(selectedFolder)
+      showAlert("Tarea eliminada con éxito", "success")
     } catch (error) {
       console.error("Error deleting task:", error)
-      showAlert("Error al eliminar la tarea")
+      showAlert("Error al eliminar la tarea: " + (error.response?.data?.message || error.message))
     }
   }
 
@@ -338,26 +365,14 @@ function Tasks() {
                   )}
                 </Button>
 
-                {!showForm && isPrivateFolder && (
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={() => setViewMode("list")}
-                      variant={viewMode === "list" ? "default" : "outline"}
-                      size="sm"
-                      className="flex items-center gap-1"
-                    >
-                      <List className="h-4 w-4" />
-                      List
-                    </Button>
-                    <Button
-                      onClick={() => setViewMode("calendar")}
-                      variant={viewMode === "calendar" ? "default" : "outline"}
-                      size="sm"
-                      className="flex items-center gap-1"
-                    >
-                      <Calendar className="h-4 w-4" />
-                      Calendar
-                    </Button>
+                {/* Mostrar información del tipo de vista según el tipo de carpeta */}
+                {!showForm && (
+                  <div className="text-sm text-notion-text-light dark:text-notion-text-dark">
+                    {isPrivateFolder ? (
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">Vista: Calendario (Privada)</span>
+                    ) : (
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded">Vista: Lista (Pública)</span>
+                    )}
                   </div>
                 )}
               </div>
@@ -390,15 +405,15 @@ function Tasks() {
 
                     {!isPublic && (
                       <div className="space-y-2">
-                        <Label htmlFor="date" className="text-notion-text dark:text-notion-text-dark">
-                          Date and Time
+                        <Label htmlFor="dateStart" className="text-notion-text dark:text-notion-text-dark">
+                          Start Date and Time
                         </Label>
                         <Input
-                          id="date"
+                          id="dateStart"
                           type="datetime-local"
                           className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
                           onChange={handleDateTimeChange}
-                          {...register("date")}
+                          {...register("dateStart")}
                         />
                       </div>
                     )}
@@ -416,8 +431,6 @@ function Tasks() {
                         />
                       </div>
                     )}
-
-                    {/* Eliminar completamente el campo numberRepeat del formulario de creación */}
 
                     <div className="flex justify-between">
                       <Button type="submit" className="bg-notion-orange hover:bg-notion-orange-dark text-white">
@@ -522,16 +535,20 @@ function Tasks() {
                     <div className="mt-6">
                       <Loader size="large" />
                     </div>
-                  ) : isPrivateFolder && viewMode === "calendar" ? (
-                    <div className="mt-4">
-                      <TaskCalendar
-                        tasks={tasks}
-                        onEditTask={handleEditTask}
-                        onDeleteTask={handleDeleteTask}
-                        onCompleteTask={initiateCompleteTask}
-                      />
-                    </div>
+                  ) : isPrivateFolder ? (
+                    <>
+                      {/* Para carpetas privadas: solo mostrar calendario */}
+                      <div className="mt-4">
+                        <TaskCalendar
+                          tasks={tasks}
+                          onEditTask={handleEditTask}
+                          onDeleteTask={handleDeleteTask}
+                          onCompleteTask={initiateCompleteTask}
+                        />
+                      </div>
+                    </>
                   ) : (
+                    // Para carpetas públicas: solo mostrar lista
                     <div className="mt-4 space-y-4">
                       {tasks.length > 0 ? (
                         tasks.map((task) => (
@@ -580,18 +597,20 @@ function Tasks() {
                                   {!isPublic && (
                                     <div className="space-y-2">
                                       <Label
-                                        htmlFor={`date-${task.id}`}
+                                        htmlFor={`dateStart-${task.id}`}
                                         className="text-notion-text dark:text-notion-text-dark"
                                       >
-                                        Date and Time
+                                        Start Date and Time
                                       </Label>
                                       <Input
-                                        id={`date-${task.id}`}
+                                        id={`dateStart-${task.id}`}
                                         type="datetime-local"
                                         className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
-                                        defaultValue={task.date ? new Date(task.date).toISOString().slice(0, 16) : ""}
+                                        defaultValue={
+                                          task.dateStart ? new Date(task.dateStart).toISOString().slice(0, 16) : ""
+                                        }
                                         onChange={handleDateTimeChange}
-                                        {...register("date")}
+                                        {...register("dateStart")}
                                       />
                                     </div>
                                   )}
@@ -613,8 +632,6 @@ function Tasks() {
                                       />
                                     </div>
                                   )}
-
-                                  {/* El campo numberRepeat se ha eliminado del formulario de edición */}
 
                                   <div className="flex justify-between">
                                     <Button
@@ -649,9 +666,14 @@ function Tasks() {
                                       {task.description}
                                     </p>
                                   )}
-                                  {task.date && (
+                                  {task.dateStart && (
                                     <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
-                                      Date: {new Date(task.date).toLocaleString()}
+                                      Start Date: {new Date(task.dateStart).toLocaleString()}
+                                    </p>
+                                  )}
+                                  {task.dateEnd && (
+                                    <p className="mt-2 text-sm text-notion-text-light dark:text-notion-text-dark">
+                                      Completed Date: {new Date(task.dateEnd).toLocaleString()}
                                     </p>
                                   )}
                                   {isPublic && (
@@ -709,4 +731,3 @@ function Tasks() {
 }
 
 export default Tasks
-

@@ -1,11 +1,12 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import { getUserProfile, getUserHistory } from "../utils/api"
 import Loader from "../components/Loader"
-import { format } from "date-fns"
 
 function Profile() {
-  const { user } = useAuth()
+  const { user, setUser } = useAuth()
   const [profile, setProfile] = useState(null)
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
@@ -13,27 +14,22 @@ function Profile() {
 
   useEffect(() => {
     const fetchProfileData = async () => {
-      if (user) {
-        try {
-          setLoading(true)
-          setError(null)
-          const [profileData, historyData] = await Promise.all([
-            getUserProfile(),
-            getUserHistory(localStorage.getItem("token")),
-          ])
-          setProfile(profileData.data)
-          setHistory(Array.isArray(historyData.data) ? historyData.data : [])
-        } catch (error) {
-          console.error("Error fetching profile data:", error)
-          setError("Failed to load profile data. Please try again later.")
-        } finally {
-          setLoading(false)
-        }
+      try {
+        setLoading(true)
+        setError(null)
+        const [profileData, historyData] = await Promise.all([getUserProfile(), getUserHistory()])
+        setProfile(profileData.data)
+        setHistory(Array.isArray(historyData.data) ? historyData.data : [])
+      } catch (error) {
+        console.error("Error fetching profile data:", error)
+        setError("Failed to load profile data. Please try again later.")
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchProfileData()
-  }, [user])
+  }, []) // Array vacío - solo se ejecuta una vez al montar
 
   if (loading) {
     return (
@@ -88,5 +84,3 @@ function Profile() {
 }
 
 export default Profile
-
-

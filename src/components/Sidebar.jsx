@@ -27,8 +27,17 @@ import {
 } from "lucide-react"
 
 function Sidebar({ isOpen, setIsOpen }) {
-  const { user, logout } = useAuth()
+  const { user, isAuthenticated, logout } = useAuth()
   const location = useLocation()
+
+  // Debug log para ver cambios en el estado de autenticación
+  useEffect(() => {
+    console.log("🎨 Sidebar - Auth state:", {
+      isAuthenticated,
+      user: user ? { id: user.id, name: user.name } : null,
+      timestamp: new Date().toISOString(),
+    })
+  }, [isAuthenticated, user])
 
   // Cerrar el sidebar en dispositivos móviles cuando cambia la ruta
   useEffect(() => {
@@ -43,36 +52,23 @@ function Sidebar({ isOpen, setIsOpen }) {
 
   const handleLogout = async () => {
     try {
-      // Hacer la petición POST al endpoint de refresh
-      const response = await fetch("https://api-familia-tareas-node.onrender.com/auth/refresh", {
-        method: "POST",
-        credentials: 'include',
-        headers: {
-          "Content-Type": "application/json",
-          // Incluir el token de autorización si es necesario
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-        // Agregar body si es necesario
-        body: JSON.stringify({}),
-      })
-
-      if (response.ok) {
-        console.log("Logout request successful")
-      } else {
-        console.error("Logout request failed:", response.status)
-      }
+      await logout()
+      setIsOpen(false)
     } catch (error) {
-      console.error("Error during logout request:", error)
-    } finally {
-      // Ejecutar el logout local independientemente del resultado de la petición
-      logout()
+      console.error("Error during logout:", error)
+      setIsOpen(false)
+    }
+  }
+
+  const handleLinkClick = () => {
+    if (window.innerWidth < 768) {
       setIsOpen(false)
     }
   }
 
   return (
     <>
-      {/* Botón de toggle para el sidebar (visible en todas las pantallas) */}
+      {/* Botón de toggle para el sidebar */}
       <button
         className="fixed top-4 left-4 z-50 p-2 rounded-md bg-notion-gray dark:bg-notion-dark text-notion-text dark:text-notion-text-dark hover:bg-notion-gray-dark dark:hover:bg-gray-700 focus:outline-none"
         onClick={toggleSidebar}
@@ -102,7 +98,7 @@ function Sidebar({ isOpen, setIsOpen }) {
         </div>
 
         {/* Información del usuario en el sidebar */}
-        {user && (
+        {isAuthenticated && user && (
           <div className="px-4 py-2 mb-4 border-b border-notion-gray-dark dark:border-gray-700">
             <p className="text-sm font-medium text-notion-text dark:text-notion-text-dark">Logged in as:</p>
             <p className="text-notion-text-light dark:text-notion-text-dark truncate">{user.name}</p>
@@ -119,18 +115,18 @@ function Sidebar({ isOpen, setIsOpen }) {
         <nav className="space-y-1">
           <Link
             to="/"
-            onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+            onClick={handleLinkClick}
             className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
           >
             <Home className="h-5 w-5 mr-3" />
             Home
           </Link>
 
-          {user ? (
+          {isAuthenticated ? (
             <>
               <Link
                 to="/profile"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <User className="h-5 w-5 mr-3" />
@@ -143,7 +139,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </div>
               <Link
                 to="/accounts"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <CreditCard className="h-5 w-5 mr-3" />
@@ -151,7 +147,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/expenses"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <ArrowDownCircle className="h-5 w-5 mr-3" />
@@ -159,7 +155,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/incomes"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <ArrowUpCircle className="h-5 w-5 mr-3" />
@@ -167,7 +163,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/categories"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <Tags className="h-5 w-5 mr-3" />
@@ -175,7 +171,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/finances"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <FileOutput className="h-5 w-5 mr-3" />
@@ -188,7 +184,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </div>
               <Link
                 to="/projects"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <Wallet className="h-5 w-5 mr-3" />
@@ -196,7 +192,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/folders"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <FolderOpen className="h-5 w-5 mr-3" />
@@ -204,7 +200,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/tasks"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <FileText className="h-5 w-5 mr-3" />
@@ -212,7 +208,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/tasks/monthly"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <BarChart2 className="h-5 w-5 mr-3" />
@@ -225,16 +221,16 @@ function Sidebar({ isOpen, setIsOpen }) {
               </div>
               <Link
                 to="/users/points"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <PieChart className="h-5 w-5 mr-3" />
                 User Points
               </Link>
-              {user.isAdmin && (
+              {user?.isAdmin && (
                 <Link
                   to="/users"
-                  onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                  onClick={handleLinkClick}
                   className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
                 >
                   <Users className="h-5 w-5 mr-3" />
@@ -246,7 +242,7 @@ function Sidebar({ isOpen, setIsOpen }) {
             <>
               <Link
                 to="/login"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <LogIn className="h-5 w-5 mr-3" />
@@ -254,7 +250,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/register"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <UserPlus className="h-5 w-5 mr-3" />
@@ -262,7 +258,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </Link>
               <Link
                 to="/password-recovery"
-                onClick={() => window.innerWidth < 768 && setIsOpen(false)}
+                onClick={handleLinkClick}
                 className="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-notion-gray-dark dark:hover:bg-notion-gray text-notion-text dark:text-notion-text-dark"
               >
                 <KeyRound className="h-5 w-5 mr-3" />

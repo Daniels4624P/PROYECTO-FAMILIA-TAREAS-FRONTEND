@@ -14,13 +14,32 @@ const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
   const [view, setView] = useState(Views.MONTH)
   const [selectedTask, setSelectedTask] = useState(null)
 
-  const taskEvents = tasks.map((task) => ({
-    ...task,
-    title: task.task,
-    start: new Date(task.date || task.createdAt),
-    end: new Date(task.date || task.createdAt),
-    color: task.completed ? "#0F9D58" : "#4285F4",
-  }))
+  // Filtrar y mapear las tareas para el calendario
+  const taskEvents =
+    tasks
+      ?.filter((task) => {
+        const hasDateStart = task.dateStart && task.dateStart !== null && task.dateStart !== undefined
+        return hasDateStart
+      })
+      .map((task) => {
+        const startDate = new Date(task.dateStart)
+        const endDate = task.dateEnd ? new Date(task.dateEnd) : startDate
+
+        const event = {
+          ...task,
+          title: task.task,
+          start: startDate,
+          end: endDate,
+          // Color basado en el estado de la tarea
+          color: task.dateEnd ? "#0F9D58" : task.completed ? "#FF9800" : "#4285F4",
+        }
+        return event
+      }) || []
+
+  // Mostrar mensaje si no hay eventos
+  if (taskEvents.length === 0) {
+    console.warn("No hay eventos para mostrar en el calendario")
+  }
 
   const eventStyleGetter = (event) => {
     const style = {
@@ -169,13 +188,19 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
         </DialogHeader>
         <DialogDescription>
           <p>
-            <strong>Description:</strong> {task.description}
+            <strong>Description:</strong> {task.description || "Sin descripción"}
           </p>
           <p>
-            <strong>Date:</strong> {task.date ? new Date(task.date).toLocaleDateString() : "Not set"}
+            <strong>Start Date:</strong> {task.dateStart ? new Date(task.dateStart).toLocaleString() : "Not set"}
           </p>
+          {task.dateEnd && (
+            <p>
+              <strong>Completed Date:</strong> {new Date(task.dateEnd).toLocaleString()}
+            </p>
+          )}
           <p>
-            <strong>Status:</strong> {task.completed ? "Completed" : "Pending"}
+            <strong>Status:</strong>{" "}
+            {task.dateEnd ? "Completed" : task.completed ? "Completed (no end date)" : "Pending"}
           </p>
         </DialogDescription>
         <div className="flex justify-end space-x-4 mt-4">
@@ -187,9 +212,9 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
           </Button>
-          {!task.completed && (
+          {!task.dateEnd && (
             <Button
-              onClick={() => onComplete(task.id, task.folderId)}
+              onClick={() => onComplete(task.id)}
               className="bg-notion-orange hover:bg-notion-orange-dark text-white"
             >
               Complete

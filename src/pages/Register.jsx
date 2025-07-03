@@ -18,7 +18,7 @@ function Register() {
   const onSubmit = async (data) => {
     try {
       await registerUser(data.name, data.email, data.password)
-      navigate("/login")
+      navigate("/profile")
     } catch (error) {
       console.error("Registration failed:", error)
     }
