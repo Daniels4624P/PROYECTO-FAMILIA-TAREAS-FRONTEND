@@ -188,6 +188,23 @@ export const getUserProfile = (config = {}) => {
   return api.get("/auth/profile", requestConfig)
 }
 
+// Profile endpoints - CHANGED: Updated to use /auth/profile
+export const updateProfile = (profileData) => api.patch("/auth/profile", profileData)
+
+// Google OAuth endpoints
+export const getGoogleAuthUrl = () => api.get("/auth/google/handler")
+export const handleGoogleCallback = (state, code) => api.get(`/auth/google/callback?state=${state}&code=${code}`)
+
+// Google Calendar authorization endpoints
+export const getGoogleCalendarAuthUrl = () => api.get("/tasks/google/handler")
+
+// NEW: Check Google Calendar access status from backend
+export const checkGoogleCalendarAccess = () => api.get("/auth/google-calendar-status")
+
+// X (Twitter) OAuth endpoints
+export const getXAuthUrl = () => api.get("/auth/x/handler")
+export const handleXCallback = (state, code) => api.get(`/auth/x/callback?state=${state}&code=${code}`)
+
 // User endpoints
 export const getUser = (id) => api.get(`/users/${id}`)
 export const getUserHistory = () => api.get(`/users/history`)
@@ -324,5 +341,21 @@ export const updateIncome = (id, incomeData) => api.patch(`/incomes/${id}`, inco
 export const deleteIncome = (id) => api.delete(`/incomes/${id}`)
 
 export const getAccountStatistics = () => api.get("/accounts/statistics/of/user")
+
+// Utility function to check if accessTokenGoogle cookie exists (fallback method)
+export const hasGoogleCalendarAccess = () => {
+  if (typeof document === 'undefined') return false
+  
+  const cookies = document.cookie.split(';')
+  const hasAccessToken = cookies.some(cookie => {
+    const [name, value] = cookie.trim().split('=')
+    return name === 'accessTokenGoogle' && value && value !== 'undefined' && value !== 'null'
+  })
+  
+  console.log('🔍 Checking Google Calendar access via cookies:', hasAccessToken)
+  console.log('🍪 All cookies:', document.cookie)
+  
+  return hasAccessToken
+}
 
 export default api

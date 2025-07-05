@@ -6,7 +6,8 @@ import moment from "moment"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Pencil, Trash2, CalendarIcon, Bell, Mail } from "lucide-react"
 
 const localizer = momentLocalizer(moment)
 
@@ -30,8 +31,10 @@ const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
           title: task.task,
           start: startDate,
           end: endDate,
-          // Color basado en el estado de la tarea
-          color: task.dateEnd ? "#0F9D58" : task.completed ? "#FF9800" : "#4285F4",
+          // Color basado solo en el estado completed de la API
+          color: task.completed
+            ? "#0F9D58" // Verde para completadas
+            : "#4285F4", // Azul para todas las tareas pendientes
         }
         return event
       }) || []
@@ -100,8 +103,13 @@ const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
 }
 
 const EventComponent = ({ event }) => (
-  <div className="p-2">
+  <div className="p-2 relative">
     <div className="font-bold text-sm">{event.title}</div>
+    {event.local === false && (
+      <div className="absolute top-1 right-1">
+        <CalendarIcon className="h-3 w-3 text-white opacity-80" />
+      </div>
+    )}
   </div>
 )
 
@@ -182,11 +190,19 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
 
   return (
     <Dialog open={!!task} onOpenChange={onClose}>
-      <DialogContent className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark rounded-lg shadow-lg">
+      <DialogContent className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark rounded-lg shadow-lg max-w-md">
         <DialogHeader>
-          <DialogTitle>{task.task}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {task.task}
+            {task.local === false && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                <CalendarIcon className="h-3 w-3 mr-1" />
+                Google
+              </Badge>
+            )}
+          </DialogTitle>
         </DialogHeader>
-        <DialogDescription>
+        <DialogDescription className="space-y-3">
           <p>
             <strong>Description:</strong> {task.description || "Sin descripción"}
           </p>
@@ -195,13 +211,38 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
           </p>
           {task.dateEnd && (
             <p>
-              <strong>Completed Date:</strong> {new Date(task.dateEnd).toLocaleString()}
+              <strong>End Date:</strong> {new Date(task.dateEnd).toLocaleString()}
+            </p>
+          )}
+          {task.timeZone && (
+            <p>
+              <strong>Timezone:</strong> {task.timeZone}
             </p>
           )}
           <p>
-            <strong>Status:</strong>{" "}
-            {task.dateEnd ? "Completed" : task.completed ? "Completed (no end date)" : "Pending"}
+            <strong>Status:</strong> {task.completed ? "Completed" : "Pending"}
           </p>
+
+          {/* Reminder Information */}
+          {(task.reminderMinutesPopup || task.reminderMinutesEmail) && (
+            <div className="space-y-2">
+              <strong>Reminders:</strong>
+              <div className="flex flex-wrap gap-2">
+                {task.reminderMinutesPopup && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Bell className="h-3 w-3" />
+                    Popup: {task.reminderMinutesPopup}min
+                  </Badge>
+                )}
+                {task.reminderMinutesEmail && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    Email: {task.reminderMinutesEmail}min
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
         </DialogDescription>
         <div className="flex justify-end space-x-4 mt-4">
           <Button onClick={() => onEdit(task)} className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text">
@@ -212,7 +253,7 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
           </Button>
-          {!task.dateEnd && (
+          {!task.completed && (
             <Button
               onClick={() => onComplete(task.id)}
               className="bg-notion-orange hover:bg-notion-orange-dark text-white"

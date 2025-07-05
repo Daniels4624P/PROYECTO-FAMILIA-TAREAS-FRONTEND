@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   createTask,
   getFolderTasks,
@@ -17,9 +19,11 @@ import {
   deleteTask,
   completePublicTask,
   completePrivateTask,
+  checkGoogleCalendarAccess,
+  getGoogleCalendarAuthUrl,
 } from "../utils/api"
 import Loader from "../components/Loader"
-import { Pencil, Trash2, ChevronUp, Plus, X } from "lucide-react"
+import { Pencil, Trash2, ChevronUp, Plus, X, ExternalLink } from "lucide-react"
 import TaskCalendar from "../components/TaskCalendar"
 
 function Tasks() {
@@ -36,14 +40,32 @@ function Tasks() {
   const [numberRepeat, setNumberRepeat] = useState(null)
   const [completingTaskId, setCompletingTaskId] = useState(null)
   const [numberRepeatError, setNumberRepeatError] = useState("")
+  const [hasGoogleAccess, setHasGoogleAccess] = useState(false)
+  const [showGoogleAuthAlert, setShowGoogleAuthAlert] = useState(false)
+  const [googleAuthLoading, setGoogleAuthLoading] = useState(false)
+
+  // New states for Google Calendar integration
+  const [calendarType, setCalendarType] = useState("local") // "local" or "google"
+  const [enableReminders, setEnableReminders] = useState(false)
+  const [reminderTypes, setReminderTypes] = useState([]) // ["popup", "email"]
+  const [reminderMinutesPopup, setReminderMinutesPopup] = useState(15)
+  const [reminderMinutesEmail, setReminderMinutesEmail] = useState(15)
+
+  // New states for time units
+  const [reminderUnitPopup, setReminderUnitPopup] = useState("minutes") // "minutes" or "days"
+  const [reminderUnitEmail, setReminderUnitEmail] = useState("minutes") // "minutes" or "days"
 
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm()
+
+  // Watch dateStart to validate dateEnd
+  const watchDateStart = watch("dateStart")
 
   useEffect(() => {
     fetchFolders()
@@ -57,6 +79,22 @@ function Tasks() {
       setTasks([])
     }
   }, [selectedFolder])
+
+  // Reset Google Calendar options when switching folders
+  useEffect(() => {
+    if (!isPrivateFolder) {
+      setCalendarType("local")
+      setEnableReminders(false)
+      setReminderTypes([])
+    }
+  }, [isPrivateFolder])
+
+  // Check Google Calendar access when component mounts and when private folder is selected
+  useEffect(() => {
+    if (isPrivateFolder) {
+      checkGoogleAccess()
+    }
+  }, [isPrivateFolder])
 
   const fetchFolders = async () => {
     try {
@@ -74,8 +112,16 @@ function Tasks() {
     setLoadingTasks(true)
     try {
       const response = await getFolderTasks(folderId)
-
-      setTasks(response.data.tasks.length ? response.data.tasks : [])
+      
+      // Check if response contains the Google Calendar authorization message
+      if (response.data && response.data.message && response.data.message.includes('Verifica el correo para crear tareas privadas con google')) {
+        console.log('🔍 Backend says Google Calendar auth needed')
+        // Check if user actually has Google access
+        await checkGoogleAccess()
+        setTasks([])
+      } else {
+        setTasks(response.data.tasks ? response.data.tasks : [])
+      }
     } catch (error) {
       console.error("Error fetching tasks:", error)
       showAlert("Error al cargar las tareas")
@@ -91,9 +137,84 @@ function Tasks() {
     setIsPrivateFolder(!isPublic)
   }
 
+  // Function to check Google Calendar access from backend
+  const checkGoogleAccess = async () => {
+    try {
+      const response = await checkGoogleCalendarAccess()
+      console.log('🔍 Google Calendar access check response:', response.data)
+      const hasAccess = response.data?.hasAccess === true
+      setHasGoogleAccess(hasAccess)
+      
+      // Show alert only if user doesn't have access and is in a private folder
+      if (!hasAccess && isPrivateFolder) {
+        setShowGoogleAuthAlert(true)
+      } else {
+        setShowGoogleAuthAlert(false)
+      }
+    } catch (error) {
+      console.error("Error checking Google Calendar access:", error)
+      // If the endpoint doesn't exist, assume no access
+      setHasGoogleAccess(false)
+      if (isPrivateFolder) {
+        setShowGoogleAuthAlert(true)
+      }
+    }
+  }
+
+  const handleGoogleCalendarAuth = async () => {
+    setGoogleAuthLoading(true)
+    try {
+      const response = await getGoogleCalendarAuthUrl()
+      if (response.data) {
+        // The response.data contains the Google authorization URL
+        window.location.href = response.data
+      }
+    } catch (error) {
+      console.error("Error getting Google Calendar auth URL:", error)
+      showAlert("Failed to initiate Google Calendar authorization. Please try again.")
+    } finally {
+      setGoogleAuthLoading(false)
+    }
+  }
+
   const handleDateTimeChange = (e) => {
     const datetime = e.target.value
     setValue("dateStart", datetime)
+  }
+
+  const handleReminderTypeChange = (type, checked) => {
+    if (checked) {
+      setReminderTypes((prev) => [...prev, type])
+    } else {
+      setReminderTypes((prev) => prev.filter((t) => t !== type))
+    }
+  }
+
+  const getUserTimezone = () => {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone
+  }
+
+  // Function to convert time to minutes
+  const convertToMinutes = (value, unit) => {
+    if (unit === "days") {
+      return value * 24 * 60 // Convert days to minutes
+    }
+    return value // Already in minutes
+  }
+
+  // Function to convert minutes back to appropriate unit and value
+  const convertFromMinutes = (minutes) => {
+    if (minutes >= 1440 && minutes % 1440 === 0) {
+      // If it's a whole number of days
+      return {
+        value: minutes / 1440,
+        unit: "days",
+      }
+    }
+    return {
+      value: minutes,
+      unit: "minutes",
+    }
   }
 
   const onSubmit = async (data) => {
@@ -109,6 +230,61 @@ function Tasks() {
         dateEnd: null,
       }
 
+      // Add Google Calendar specific fields for private folders
+      if (isPrivateFolder && calendarType === "google") {
+        // Validate dateEnd is provided for Google Calendar
+        if (!data.dateEnd) {
+          showAlert("End date is required for Google Calendar integration")
+          return
+        }
+
+        taskData.dateEnd = new Date(data.dateEnd).toISOString()
+        taskData.timeZone = getUserTimezone()
+        taskData.local = false
+
+        // Add reminder settings with conversion to minutes
+        if (enableReminders && reminderTypes.length > 0) {
+          if (reminderTypes.includes("popup")) {
+            taskData.reminderMinutesPopup = convertToMinutes(reminderMinutesPopup, reminderUnitPopup)
+          }
+          if (reminderTypes.includes("email")) {
+            taskData.reminderMinutesEmail = convertToMinutes(reminderMinutesEmail, reminderUnitEmail)
+          }
+        }
+      } else if (isPrivateFolder) {
+        taskData.local = true
+      }
+
+      // Add Google Calendar specific fields when editing Google events
+      if (editingTask && editingTask.googleEventId) {
+        // Always include these fields for Google Calendar events during edit
+        if (data.dateEnd) {
+          taskData.dateEnd = new Date(data.dateEnd).toISOString()
+        }
+
+        taskData.timeZone = getUserTimezone()
+        taskData.local = false
+
+        // Add reminder settings if enabled with conversion to minutes
+        if (enableReminders && reminderTypes.length > 0) {
+          if (reminderTypes.includes("popup")) {
+            taskData.reminderMinutesPopup = convertToMinutes(reminderMinutesPopup, reminderUnitPopup)
+          } else {
+            taskData.reminderMinutesPopup = null
+          }
+
+          if (reminderTypes.includes("email")) {
+            taskData.reminderMinutesEmail = convertToMinutes(reminderMinutesEmail, reminderUnitEmail)
+          } else {
+            taskData.reminderMinutesEmail = null
+          }
+        } else {
+          // Clear reminders if disabled
+          taskData.reminderMinutesPopup = null
+          taskData.reminderMinutesEmail = null
+        }
+      }
+
       if (editingTask) {
         await updateTask(editingTask.id, taskData)
         setEditingTask(null)
@@ -117,9 +293,18 @@ function Tasks() {
         await createTask(taskData)
         showAlert("Tarea creada con éxito", "success")
       }
+
       reset()
+      // Reset Google Calendar states
+      setCalendarType("local")
+      setEnableReminders(false)
+      setReminderTypes([])
+      setReminderMinutesPopup(15)
+      setReminderMinutesEmail(15)
+      setReminderUnitPopup("minutes")
+      setReminderUnitEmail("minutes")
+
       fetchTasks(selectedFolder)
-      // Mostrar la lista de tareas después de crear/actualizar una tarea
       setShowForm(false)
       setInlineEditingTaskId(null)
     } catch (error) {
@@ -276,6 +461,46 @@ function Tasks() {
       setValue("dateStart", "")
     }
 
+    // Check if it's a Google Calendar event and set additional fields
+    if (task.googleEventId) {
+      setCalendarType("google")
+
+      // Set dateEnd if available
+      if (task.dateEnd) {
+        const dateEndObj = new Date(task.dateEnd)
+        const formattedDateEnd = dateEndObj.toISOString().slice(0, 16)
+        setValue("dateEnd", formattedDateEnd)
+      }
+
+      // Set reminder settings if available
+      if (task.reminderMinutesPopup || task.reminderMinutesEmail) {
+        setEnableReminders(true)
+        const reminderTypesArray = []
+
+        if (task.reminderMinutesPopup) {
+          reminderTypesArray.push("popup")
+          const popupConversion = convertFromMinutes(task.reminderMinutesPopup)
+          setReminderMinutesPopup(popupConversion.value)
+          setReminderUnitPopup(popupConversion.unit)
+        }
+
+        if (task.reminderMinutesEmail) {
+          reminderTypesArray.push("email")
+          const emailConversion = convertFromMinutes(task.reminderMinutesEmail)
+          setReminderMinutesEmail(emailConversion.value)
+          setReminderUnitEmail(emailConversion.unit)
+        }
+
+        setReminderTypes(reminderTypesArray)
+      }
+    } else {
+      setCalendarType("local")
+      setEnableReminders(false)
+      setReminderTypes([])
+      setReminderUnitPopup("minutes")
+      setReminderUnitEmail("minutes")
+    }
+
     // Desplazarse al formulario
     setTimeout(() => {
       document.querySelector(".border.p-4.rounded-md")?.scrollIntoView({ behavior: "smooth" })
@@ -348,6 +573,48 @@ function Tasks() {
             </SelectContent>
           </Select>
 
+          {/* Google Calendar Authorization Alert - Only show for private folders without access */}
+          {showGoogleAuthAlert && isPrivateFolder && !hasGoogleAccess && (
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-blue-600 dark:text-blue-400">📅</div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-100">Google Calendar Authorization Required</h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      To create private tasks with Google Calendar integration, you need to authorize access to your Google Calendar.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleGoogleCalendarAuth}
+                    disabled={googleAuthLoading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                    size="sm"
+                  >
+                    {googleAuthLoading ? (
+                      "Connecting..."
+                    ) : (
+                      <>
+                        <ExternalLink className="h-4 w-4" />
+                        Authorize
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => setShowGoogleAuthAlert(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {selectedFolder && (
             <>
               <div className="mt-4 flex justify-between items-center">
@@ -404,18 +671,226 @@ function Tasks() {
                     </div>
 
                     {!isPublic && (
-                      <div className="space-y-2">
-                        <Label htmlFor="dateStart" className="text-notion-text dark:text-notion-text-dark">
-                          Start Date and Time
-                        </Label>
-                        <Input
-                          id="dateStart"
-                          type="datetime-local"
-                          className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
-                          onChange={handleDateTimeChange}
-                          {...register("dateStart")}
-                        />
-                      </div>
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="dateStart" className="text-notion-text dark:text-notion-text-dark">
+                            Start Date and Time
+                          </Label>
+                          <Input
+                            id="dateStart"
+                            type="datetime-local"
+                            className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                            onChange={handleDateTimeChange}
+                            {...register("dateStart")}
+                          />
+                        </div>
+
+                        {/* Calendar Type Selection for Private Folders */}
+                        <div className="space-y-4 p-4 border rounded-md bg-blue-50 dark:bg-blue-900/20">
+                          <Label className="text-notion-text dark:text-notion-text-dark font-semibold">
+                            Calendar Integration
+                          </Label>
+                          <RadioGroup value={calendarType} onValueChange={setCalendarType}>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="local" id="local" />
+                              <Label htmlFor="local" className="text-notion-text dark:text-notion-text-dark">
+                                Local Calendar Only
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="google" id="google" />
+                              <Label htmlFor="google" className="text-notion-text dark:text-notion-text-dark">
+                                Sync with Google Calendar
+                              </Label>
+                            </div>
+                          </RadioGroup>
+
+                          {/* Google Calendar specific fields for editing existing Google events */}
+                          {(calendarType === "google" || (editingTask && editingTask.googleEventId)) && (
+                            <div className="space-y-4 mt-4 p-3 border rounded-md bg-white dark:bg-gray-800">
+                              {editingTask && editingTask.googleEventId && (
+                                <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/30 rounded-md">
+                                  <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                                    📅 Editing Google Calendar Event
+                                  </p>
+                                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                                    Event ID: {editingTask.googleEventId}
+                                  </p>
+                                </div>
+                              )}
+
+                              <div className="space-y-2">
+                                <Label htmlFor="dateEnd" className="text-notion-text dark:text-notion-text-dark">
+                                  End Date and Time <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                  id="dateEnd"
+                                  type="datetime-local"
+                                  className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                  {...register("dateEnd", {
+                                    required:
+                                      calendarType === "google" || (editingTask && editingTask.googleEventId)
+                                        ? "End date is required for Google Calendar"
+                                        : false,
+                                    validate: (value) => {
+                                      if (
+                                        (calendarType === "google" || (editingTask && editingTask.googleEventId)) &&
+                                        watchDateStart &&
+                                        value
+                                      ) {
+                                        return (
+                                          new Date(value) > new Date(watchDateStart) ||
+                                          "End date must be after start date"
+                                        )
+                                      }
+                                      return true
+                                    },
+                                  })}
+                                />
+                                {errors.dateEnd && <p className="text-sm text-red-500">{errors.dateEnd.message}</p>}
+                              </div>
+
+                              {/* Reminder Settings */}
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id="enableReminders"
+                                    checked={enableReminders}
+                                    onCheckedChange={setEnableReminders}
+                                  />
+                                  <Label
+                                    htmlFor="enableReminders"
+                                    className="text-notion-text dark:text-notion-text-dark"
+                                  >
+                                    Enable Reminders
+                                  </Label>
+                                </div>
+
+                                {enableReminders && (
+                                  <div className="space-y-3 ml-6">
+                                    <Label className="text-notion-text dark:text-notion-text-dark font-medium">
+                                      Reminder Types:
+                                    </Label>
+
+                                    <div className="space-y-2">
+                                      <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id="reminderPopup"
+                                          checked={reminderTypes.includes("popup")}
+                                          onCheckedChange={(checked) => handleReminderTypeChange("popup", checked)}
+                                        />
+                                        <Label
+                                          htmlFor="reminderPopup"
+                                          className="text-notion-text dark:text-notion-text-dark"
+                                        >
+                                          Popup Notification
+                                        </Label>
+                                      </div>
+
+                                      {reminderTypes.includes("popup") && (
+                                        <div className="ml-6 space-y-2">
+                                          <Label
+                                            htmlFor="reminderMinutesPopup"
+                                            className="text-notion-text dark:text-notion-text-dark text-sm"
+                                          >
+                                            Time before (Popup)
+                                          </Label>
+                                          <div className="flex space-x-2">
+                                            <Input
+                                              id="reminderMinutesPopup"
+                                              type="number"
+                                              min="1"
+                                              max={reminderUnitPopup === "days" ? "30" : "43200"}
+                                              value={reminderMinutesPopup}
+                                              onChange={(e) => setReminderMinutesPopup(Number(e.target.value))}
+                                              className="w-20 bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                            />
+                                            <Select value={reminderUnitPopup} onValueChange={setReminderUnitPopup}>
+                                              <SelectTrigger className="w-24 bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                <SelectItem value="minutes">Min</SelectItem>
+                                                <SelectItem value="days">Days</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <p className="text-xs text-gray-500">
+                                            {reminderUnitPopup === "days"
+                                              ? `= ${convertToMinutes(reminderMinutesPopup, reminderUnitPopup)} minutes`
+                                              : "Max: 30 days (43200 minutes)"}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id="reminderEmail"
+                                          checked={reminderTypes.includes("email")}
+                                          onCheckedChange={(checked) => handleReminderTypeChange("email", checked)}
+                                        />
+                                        <Label
+                                          htmlFor="reminderEmail"
+                                          className="text-notion-text dark:text-notion-text-dark"
+                                        >
+                                          Email Notification
+                                        </Label>
+                                      </div>
+
+                                      {reminderTypes.includes("email") && (
+                                        <div className="ml-6 space-y-2">
+                                          <Label
+                                            htmlFor="reminderMinutesEmail"
+                                            className="text-notion-text dark:text-notion-text-dark text-sm"
+                                          >
+                                            Time before (Email)
+                                          </Label>
+                                          <div className="flex space-x-2">
+                                            <Input
+                                              id="reminderMinutesEmail"
+                                              type="number"
+                                              min="1"
+                                              max={reminderUnitEmail === "days" ? "30" : "43200"}
+                                              value={reminderMinutesEmail}
+                                              onChange={(e) => setReminderMinutesEmail(Number(e.target.value))}
+                                              className="w-20 bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark"
+                                            />
+                                            <Select value={reminderUnitEmail} onValueChange={setReminderUnitEmail}>
+                                              <SelectTrigger className="w-24 bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                <SelectItem value="minutes">Min</SelectItem>
+                                                <SelectItem value="days">Days</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                          <p className="text-xs text-gray-500">
+                                            {reminderUnitEmail === "days"
+                                              ? `= ${convertToMinutes(reminderMinutesEmail, reminderUnitEmail)} minutes`
+                                              : "Max: 30 days (43200 minutes)"}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="text-sm text-blue-600 dark:text-blue-400">
+                                <p>
+                                  📅 This task{" "}
+                                  {editingTask && editingTask.googleEventId ? "is synced" : "will be synced"} with your
+                                  Google Calendar
+                                </p>
+                                <p>🌍 Timezone: {getUserTimezone()}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
                     )}
 
                     {isPublic && (
@@ -442,6 +917,13 @@ function Tasks() {
                           onClick={() => {
                             setEditingTask(null)
                             reset()
+                            setCalendarType("local")
+                            setEnableReminders(false)
+                            setReminderTypes([])
+                            setReminderMinutesPopup(15)
+                            setReminderMinutesEmail(15)
+                            setReminderUnitPopup("minutes")
+                            setReminderUnitEmail("minutes")
                           }}
                           className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text"
                         >
@@ -682,8 +1164,7 @@ function Tasks() {
                                     </p>
                                   )}
                                   <p className="text-sm text-notion-text-light dark:text-notion-text-dark">
-                                    Status:{" "}
-                                    {task.completed ? (isPublic ? "Completed" : "Completed (Private)") : "Pending"}
+                                    Status: {task.completed ? "Completed" : "Pending"}
                                   </p>
                                   <div className="mt-4 space-x-2">
                                     <Button
