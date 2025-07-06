@@ -3,7 +3,7 @@
   publish = "dist"
 
 [[redirects]]
-  from = "/*"
+  from = "/api/*"
   to = "https://api-familia-tareas-node.onrender.com/:splat"
   status = 200
   force = true
