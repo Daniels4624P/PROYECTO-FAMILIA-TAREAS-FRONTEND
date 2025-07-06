@@ -21,6 +21,7 @@ import Expenses from "./pages/Expenses"
 import Categories from "./pages/Categories"
 import Finances from "./pages/Finances"
 import Incomes from "./pages/Incomes"
+import AuthGoogleCallback from './pages/AuthGoogleCallback'
 
 function App() {
   // Modificar el useState inicial para leer del localStorage
@@ -86,6 +87,7 @@ function App() {
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/finances" element={<Finances />} />
                 <Route path="/incomes" element={<Incomes />} />
+                <Route path="/auth/google/callback" element={<AuthGoogleCallback />} />
               </Routes>
             </div>
           </main>
