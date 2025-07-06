@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/*"
-  to = "https://https://api-familia-tareas-node.onrender.com/:splat"
+  to = "https://api-familia-tareas-node.onrender.com/:splat"
   status = 200
   force = true
