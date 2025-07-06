@@ -11,35 +11,157 @@ import { Pencil, Trash2, CalendarIcon, Bell, Mail } from "lucide-react"
 
 const localizer = momentLocalizer(moment)
 
-const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
+const TaskCalendar = ({ tasks, dataGoogle, onEditTask, onDeleteTask, onCompleteTask, onEditGoogleEvent, onDeleteGoogleEvent }) => {
   const [view, setView] = useState(Views.MONTH)
   const [selectedTask, setSelectedTask] = useState(null)
 
-  // Filtrar y mapear las tareas para el calendario
-  const taskEvents =
-    tasks
-      ?.filter((task) => {
-        const hasDateStart = task.dateStart && task.dateStart !== null && task.dateStart !== undefined
-        return hasDateStart
-      })
-      .map((task) => {
-        const startDate = new Date(task.dateStart)
-        const endDate = task.dateEnd ? new Date(task.dateEnd) : startDate
+  // Function to convert Google Calendar event to task format
+  const convertGoogleEventToTask = (googleEvent) => {
+    return {
+      id: `google-${googleEvent.id}`,
+      task: googleEvent.summary || "Sin título",
+      title: googleEvent.summary || "Sin título",
+      description: googleEvent.description || "",
+      dateStart: googleEvent.start?.dateTime || googleEvent.start?.date,
+      dateEnd: googleEvent.end?.dateTime || googleEvent.end?.date,
+      timeZone: googleEvent.start?.timeZone || googleEvent.end?.timeZone,
+      completed: googleEvent.status === "cancelled" ? true : false,
+      local: false,
+      googleEventId: googleEvent.id,
+      htmlLink: googleEvent.htmlLink,
+      // Extract reminder information if available
+      reminderMinutesPopup: googleEvent.reminders?.overrides?.find(r => r.method === 'popup')?.minutes,
+      reminderMinutesEmail: googleEvent.reminders?.overrides?.find(r => r.method === 'email')?.minutes,
+      // Additional Google Calendar fields
+      creator: googleEvent.creator,
+      organizer: googleEvent.organizer,
+      etag: googleEvent.etag,
+      kind: googleEvent.kind
+    }
+  }
 
-        const event = {
-          ...task,
-          title: task.task,
-          start: startDate,
-          end: endDate,
-          // Color basado solo en el estado completed de la API
-          color: task.completed
-            ? "#0F9D58" // Verde para completadas
-            : "#4285F4", // Azul para todas las tareas pendientes
-        }
-        return event
-      }) || []
+  // Function to check if a local task matches a Google event
+  const isTaskMatchingGoogleEvent = (localTask, googleEvent) => {
+    // Check if local task has the same googleEventId
+    if (localTask.googleEventId === googleEvent.id) {
+      return true
+    }
 
-  // Mostrar mensaje si no hay eventos
+    // Check if task names are similar and dates are close
+    const taskTitle = localTask.task?.toLowerCase().trim()
+    const googleTitle = googleEvent.summary?.toLowerCase().trim()
+    
+    if (taskTitle && googleTitle && taskTitle === googleTitle) {
+      // Check if dates are the same day
+      const taskDate = localTask.dateStart ? new Date(localTask.dateStart).toDateString() : null
+      const googleDate = googleEvent.start?.dateTime || googleEvent.start?.date
+      const googleDateStr = googleDate ? new Date(googleDate).toDateString() : null
+      
+      if (taskDate && googleDateStr && taskDate === googleDateStr) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  // Combine local tasks and Google Calendar events
+  const combineTasksAndGoogleEvents = () => {
+    let combinedEvents = []
+    
+    // FIXED: Include ALL local tasks, not just those with dateStart
+    const allLocalTasks = tasks || []
+    console.log("📋 All local tasks:", allLocalTasks.length)
+    
+    // Filter tasks with dates for calendar display
+    const localTasksWithDates = allLocalTasks.filter(task => 
+      task.dateStart && task.dateStart !== null && task.dateStart !== undefined
+    )
+    console.log("📅 Local tasks with dates:", localTasksWithDates.length)
+
+    // Convert Google events to task format
+    const googleTaskEvents = (dataGoogle || []).map(convertGoogleEventToTask)
+    console.log("🔴 Google events:", googleTaskEvents.length)
+
+    // Add local tasks with dates first
+    localTasksWithDates.forEach(localTask => {
+      // Check if this local task matches any Google event
+      const matchingGoogleEvent = googleTaskEvents.find(googleTask => 
+        isTaskMatchingGoogleEvent(localTask, { 
+          id: googleTask.googleEventId, 
+          summary: googleTask.task,
+          start: { dateTime: googleTask.dateStart }
+        })
+      )
+
+      if (matchingGoogleEvent) {
+        // If there's a matching Google event, prefer the local task but add Google metadata
+        combinedEvents.push({
+          ...localTask,
+          htmlLink: matchingGoogleEvent.htmlLink,
+          creator: matchingGoogleEvent.creator,
+          organizer: matchingGoogleEvent.organizer,
+          etag: matchingGoogleEvent.etag,
+          kind: matchingGoogleEvent.kind,
+          // Keep local task's local flag but note it has Google counterpart
+          hasGoogleCounterpart: true
+        })
+      } else {
+        // No matching Google event, add local task as is
+        combinedEvents.push(localTask)
+      }
+    })
+
+    // Add Google events that don't have local counterparts
+    googleTaskEvents.forEach(googleTask => {
+      const hasLocalCounterpart = localTasksWithDates.some(localTask => 
+        isTaskMatchingGoogleEvent(localTask, {
+          id: googleTask.googleEventId,
+          summary: googleTask.task,
+          start: { dateTime: googleTask.dateStart }
+        })
+      )
+
+      if (!hasLocalCounterpart) {
+        combinedEvents.push(googleTask)
+      }
+    })
+
+    console.log("✅ Combined events for calendar:", combinedEvents.length)
+    
+    // Show info about tasks without dates
+    const tasksWithoutDates = allLocalTasks.length - localTasksWithDates.length
+    if (tasksWithoutDates > 0) {
+      console.log(`ℹ️ ${tasksWithoutDates} local tasks without dates are not shown in calendar`)
+    }
+
+    return combinedEvents
+  }
+
+  // Get combined events
+  const allEvents = combineTasksAndGoogleEvents()
+
+  // Convert to calendar events format
+  const taskEvents = allEvents.map((task) => {
+    const startDate = new Date(task.dateStart)
+    const endDate = task.dateEnd ? new Date(task.dateEnd) : startDate
+
+    const event = {
+      ...task,
+      title: task.task || task.title,
+      start: startDate,
+      end: endDate,
+      // Color based on task type and completion status
+      color: task.completed
+        ? "#0F9D58" // Verde para completadas
+        : task.local === false 
+          ? "#EA4335" // Rojo para eventos de Google Calendar
+          : "#4285F4", // Azul para tareas locales
+    }
+    return event
+  })
+
+  // Show message if no events
   if (taskEvents.length === 0) {
     console.warn("No hay eventos para mostrar en el calendario")
   }
@@ -71,6 +193,32 @@ const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
 
   return (
     <div className="h-[700px] p-4 bg-notion-bg dark:bg-notion-dark rounded-lg shadow-lg">
+      {/* Legend for event types */}
+      <div className="mb-4 flex flex-wrap gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+          <span>Local Tasks</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-red-500 rounded"></div>
+          <span>Google Calendar Events</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-green-500 rounded"></div>
+          <span>Completed</span>
+        </div>
+        {/* Show info about tasks without dates */}
+        {tasks && tasks.length > 0 && (
+          <div className="text-xs text-gray-500 ml-auto">
+            {tasks.filter(t => !t.dateStart).length > 0 && (
+              <span>
+                ℹ️ {tasks.filter(t => !t.dateStart).length} tasks without dates not shown
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
       <Calendar
         localizer={localizer}
         events={taskEvents}
@@ -97,6 +245,8 @@ const TaskCalendar = ({ tasks, onEditTask, onDeleteTask, onCompleteTask }) => {
         onEdit={onEditTask}
         onDelete={onDeleteTask}
         onComplete={onCompleteTask}
+        onEditGoogleEvent={onEditGoogleEvent}
+        onDeleteGoogleEvent={onDeleteGoogleEvent}
       />
     </div>
   )
@@ -108,6 +258,11 @@ const EventComponent = ({ event }) => (
     {event.local === false && (
       <div className="absolute top-1 right-1">
         <CalendarIcon className="h-3 w-3 text-white opacity-80" />
+      </div>
+    )}
+    {event.hasGoogleCounterpart && (
+      <div className="absolute top-1 left-1">
+        <div className="w-2 h-2 bg-yellow-400 rounded-full opacity-80"></div>
       </div>
     )}
   </div>
@@ -185,19 +340,54 @@ const CustomToolbar = ({ onNavigate, date, view, onView }) => {
   )
 }
 
-const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
+const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete, onEditGoogleEvent, onDeleteGoogleEvent }) => {
   if (!task) return null
+
+  // Check if this is a Google Calendar event
+  const isGoogleEvent = task.local === false || task.googleEventId
+  const isLocalTask = task.local !== false && !task.googleEventId
+  const hasGoogleCounterpart = task.hasGoogleCounterpart
+  const isPureGoogleEvent = isGoogleEvent && !hasGoogleCounterpart
+
+  const handleEditClick = () => {
+    if (isPureGoogleEvent) {
+      // For pure Google events, use the Google event edit handler
+      onEditGoogleEvent(task)
+    } else {
+      // For local tasks or synced tasks, use the regular edit handler
+      onEdit(task)
+    }
+  }
+
+  const handleDeleteClick = () => {
+    if (isPureGoogleEvent) {
+      // For pure Google events, use the Google event delete handler
+      onDeleteGoogleEvent(task.googleEventId)
+    } else {
+      // For local tasks or synced tasks, use the regular delete handler
+      onDelete(task.id)
+    }
+  }
+
+  // FIXED: Allow completion for local tasks that are synced with Google Calendar
+  const canComplete = !task.completed && (isLocalTask || hasGoogleCounterpart)
 
   return (
     <Dialog open={!!task} onOpenChange={onClose}>
       <DialogContent className="bg-notion-bg dark:bg-notion-dark text-notion-text dark:text-notion-text-dark rounded-lg shadow-lg max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {task.task}
-            {task.local === false && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            {task.task || task.title}
+            {isGoogleEvent && (
+              <Badge variant="secondary" className="bg-red-100 text-red-800">
                 <CalendarIcon className="h-3 w-3 mr-1" />
                 Google
+              </Badge>
+            )}
+            {hasGoogleCounterpart && (
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                <CalendarIcon className="h-3 w-3 mr-1" />
+                Synced
               </Badge>
             )}
           </DialogTitle>
@@ -222,6 +412,34 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
           <p>
             <strong>Status:</strong> {task.completed ? "Completed" : "Pending"}
           </p>
+          <p>
+            <strong>Type:</strong> {isGoogleEvent ? "Google Calendar Event" : "Local Task"}
+            {hasGoogleCounterpart && " (Synced with Google)"}
+          </p>
+
+          {/* Google Calendar specific information */}
+          {isGoogleEvent && (
+            <div className="space-y-2">
+              {task.creator && (
+                <p>
+                  <strong>Creator:</strong> {task.creator.email}
+                </p>
+              )}
+              {task.htmlLink && (
+                <p>
+                  <strong>Google Calendar Link:</strong>{" "}
+                  <a 
+                    href={task.htmlLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Open in Google Calendar
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Reminder Information */}
           {(task.reminderMinutesPopup || task.reminderMinutesEmail) && (
@@ -245,21 +463,36 @@ const TaskDetailsDialog = ({ task, onClose, onEdit, onDelete, onComplete }) => {
           )}
         </DialogDescription>
         <div className="flex justify-end space-x-4 mt-4">
-          <Button onClick={() => onEdit(task)} className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text">
+          {/* Show edit and delete buttons for all events now */}
+          <Button onClick={handleEditClick} className="bg-notion-gray hover:bg-notion-gray-dark text-notion-text">
             <Pencil className="w-4 h-4 mr-2" />
             Edit
           </Button>
-          <Button onClick={() => onDelete(task.id)} className="bg-red-500 hover:bg-red-600 text-white">
+          <Button onClick={handleDeleteClick} className="bg-red-500 hover:bg-red-600 text-white">
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
           </Button>
-          {!task.completed && (
+          
+          {/* FIXED: Complete button for local tasks and synced tasks */}
+          {canComplete && (
             <Button
               onClick={() => onComplete(task.id)}
               className="bg-notion-orange hover:bg-notion-orange-dark text-white"
             >
               Complete
             </Button>
+          )}
+          
+          {/* Show additional info for different task types */}
+          {isPureGoogleEvent && (
+            <div className="text-xs text-gray-500 mt-2">
+              <p>📅 Google Calendar Event - Editable via this interface</p>
+            </div>
+          )}
+          {hasGoogleCounterpart && (
+            <div className="text-xs text-gray-500 mt-2">
+              <p>🔄 Local task synced with Google Calendar - Can be completed here</p>
+            </div>
           )}
         </div>
       </DialogContent>
