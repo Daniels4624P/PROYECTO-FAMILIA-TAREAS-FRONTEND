@@ -21,7 +21,7 @@ import Expenses from "./pages/Expenses"
 import Categories from "./pages/Categories"
 import Finances from "./pages/Finances"
 import Incomes from "./pages/Incomes"
-import AuthGoogleCallback from './components/AuthGoogleCallback'
+import AuthGoogleCallback from './components/GoogleCallback'
 
 function App() {
   // Modificar el useState inicial para leer del localStorage
