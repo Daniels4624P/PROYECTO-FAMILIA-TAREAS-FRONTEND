@@ -195,6 +195,7 @@ export const updateProfile = (profileData) => api.patch("/auth/profile", profile
 export const getGoogleAuthUrl = () => api.get("/auth/google/handler")
 export const handleGoogleCallback = (state, code) => api.get(`/auth/google/callback?state=${state}&code=${code}`)
 export const tasksGoogleCallback = (state, code) => api.get(`/tasks/google/callback?state=${state}&code=${code}`)
+export const tasksGoogleHandler = () => api.get("/tasks/google/handler")
 
 // Google Calendar authorization endpoints
 export const getGoogleCalendarAuthUrl = () => api.get("/tasks/google/handler")
