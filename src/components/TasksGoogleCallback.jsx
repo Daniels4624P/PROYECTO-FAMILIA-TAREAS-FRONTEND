@@ -36,8 +36,8 @@ function TasksGoogleCallback() {
         console.log("🔄 Processing Google callback...")
         const response = await tasksGoogleCallback(state, code)
 
-        if (response.data) {
-          console.log("✅ Google login successful:", response.data)
+        if (response.ok) {
+          console.log("✅ Google Authorization successful:", response.data)
           setUser(response.data)
           navigate("/profile")
         } else {
