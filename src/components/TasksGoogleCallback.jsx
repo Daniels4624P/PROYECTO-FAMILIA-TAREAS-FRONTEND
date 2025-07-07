@@ -38,7 +38,6 @@ function TasksGoogleCallback() {
 
         if (response.ok) {
           console.log("✅ Google Authorization successful:", response.data)
-          setUser(response.data)
           navigate("/profile")
         } else {
           throw new Error("No user data received")
