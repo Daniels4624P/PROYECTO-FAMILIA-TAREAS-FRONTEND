@@ -122,7 +122,7 @@ function Profile() {
   const handleGoogleCalendarAuth = async () => {
     setGoogleCalendarLoading(true)
     try {
-      const response = await getGoogleCalendarAuthUrl()
+      const response = await tasksGoogleHandler()
       if (response.data) {
         // The response.data contains the Google authorization URL
         window.location.href = response.data
