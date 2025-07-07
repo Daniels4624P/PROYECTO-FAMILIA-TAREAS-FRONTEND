@@ -34,20 +34,22 @@ function TasksGoogleCallback() {
         }
 
         console.log("🔄 Processing Google callback...")
-        const response = await tasksGoogleCallback(state, code)
-        console.log("🧪 Raw response:", response)
-
-        if (response) {
-          console.log("✅ Google Authorization successful:", response.data)
-          navigate("/profile")
-        } else {
-          throw new Error("No user data received")
+        try {
+          const response = await tasksGoogleCallback(state, code)
+          console.log("🧪 Google Callback Raw Response:", response)
+        
+          if (response?.status === 200) {
+            console.log("✅ Google Authorization successful:", response.data)
+            navigate("/profile")
+          } else {
+            console.warn("⚠️ Unexpected response status:", response.status)
+            throw new Error("Unexpected status from server")
+          }
+        } catch (error) {
+          console.error("❌ Error during Google Callback:", error)
+          setError("Failed to complete Google authentication.")
+          setTimeout(() => navigate("/profile"), 3000)
         }
-      } catch (error) {
-        console.error("❌ Google callback failed:", error)
-        setError("Failed to complete Google authentication.")
-        setTimeout(() => navigate("/profile"), 3000)
-      }
     }
 
     processGoogleCallback()
