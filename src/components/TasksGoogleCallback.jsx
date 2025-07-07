@@ -35,6 +35,7 @@ function TasksGoogleCallback() {
 
         console.log("🔄 Processing Google callback...")
         const response = await tasksGoogleCallback(state, code)
+        console.log("🧪 Raw response:", response)
 
         if (response) {
           console.log("✅ Google Authorization successful:", response.data)
