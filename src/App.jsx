@@ -91,7 +91,6 @@ function App() {
                 <Route path="/auth/google/callback" element={<AuthGoogleCallback />} />
                 <Route path="/auth/x/callback" element={<AuthXCallback />} />
               </Routes>
-              </Routes>
             </div>
           </main>
         </div>
