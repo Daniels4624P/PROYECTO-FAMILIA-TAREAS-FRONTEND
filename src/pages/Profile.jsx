@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
-import { getUserProfile, getUserHistory, updateProfile, getGoogleCalendarAuthUrl, checkGoogleCalendarAccess } from "../utils/api"
+import { getUserProfile, getUserHistory, updateProfile, getGoogleCalendarAuthUrl, checkGoogleCalendarAccess, tasksGoogleHandler } from "../utils/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
