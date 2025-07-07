@@ -22,6 +22,7 @@ import Categories from "./pages/Categories"
 import Finances from "./pages/Finances"
 import Incomes from "./pages/Incomes"
 import AuthGoogleCallback from './components/GoogleCallback'
+import AuthXCallback from './components/XCallback'
 
 function App() {
   // Modificar el useState inicial para leer del localStorage
@@ -88,6 +89,8 @@ function App() {
                 <Route path="/finances" element={<Finances />} />
                 <Route path="/incomes" element={<Incomes />} />
                 <Route path="/auth/google/callback" element={<AuthGoogleCallback />} />
+                <Route path="/auth/x/callback" element={<AuthXCallback />} />
+              </Routes>
               </Routes>
             </div>
           </main>
