@@ -22,21 +22,21 @@ function TasksGoogleCallback() {
         if (error) {
           console.error("❌ Google OAuth error:", error)
           setError("Google authentication was cancelled or failed.")
-          setTimeout(() => navigate("/login"), 3000)
+          setTimeout(() => navigate("/profile"), 3000)
           return
         }
 
         if (!state || !code) {
           console.error("❌ Missing state or code parameters")
           setError("Invalid callback parameters.")
-          setTimeout(() => navigate("/login"), 3000)
+          setTimeout(() => navigate("/profile"), 3000)
           return
         }
 
         console.log("🔄 Processing Google callback...")
         const response = await tasksGoogleCallback(state, code)
 
-        if (response.ok) {
+        if (response) {
           console.log("✅ Google Authorization successful:", response.data)
           navigate("/profile")
         } else {
@@ -45,7 +45,7 @@ function TasksGoogleCallback() {
       } catch (error) {
         console.error("❌ Google callback failed:", error)
         setError("Failed to complete Google authentication.")
-        setTimeout(() => navigate("/login"), 3000)
+        setTimeout(() => navigate("/profile"), 3000)
       }
     }
 
@@ -61,7 +61,7 @@ function TasksGoogleCallback() {
             Authentication Error
           </h2>
           <p className="text-notion-text-light dark:text-notion-text-dark mb-4">{error}</p>
-          <p className="text-sm text-notion-text-light dark:text-notion-text-dark">Redirecting to login page...</p>
+          <p className="text-sm text-notion-text-light dark:text-notion-text-dark">Redirecting to profile page...</p>
         </div>
       </div>
     )
@@ -70,7 +70,7 @@ function TasksGoogleCallback() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-notion-bg dark:bg-notion-dark">
       <Loader size="large" />
-      <p className="mt-4 text-notion-text dark:text-notion-text-dark">Completing Google authentication...</p>
+      <p className="mt-4 text-notion-text dark:text-notion-text-dark">Completing Google authorization...</p>
     </div>
   )
 }
