@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = "/api"
+const API_URL = "https://api-familia-tareas-node.onrender.com"
 
 const api = axios.create({
   baseURL: API_URL,
